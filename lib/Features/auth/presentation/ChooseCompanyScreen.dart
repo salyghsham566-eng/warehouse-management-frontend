@@ -1,7 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:project_2/company_products_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:project_2/Features/auth/bloc/companies_bloc.dart';
+import 'package:project_2/Features/auth/bloc/companies_event.dart';
+import 'package:project_2/Features/auth/bloc/companies_state.dart';
+import 'package:project_2/Features/auth/data/models/company_model.dart';
+import 'package:project_2/Features/auth/data/repositories/fake_companies_repository.dart';
+import 'package:project_2/Features/auth/presentation/company_products_screen.dart';
 
-enum CompanyFilter { all, hasOffers, noOffers, mostProducts }
+
+
+class ChooseCompanyPage extends StatelessWidget {
+  const ChooseCompanyPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => CompaniesBloc(FakeCompaniesRepository())
+        ..add(CompaniesStarted()),
+      child: const ChooseCompanyScreen(),
+    );
+  }
+}
 
 class ChooseCompanyScreen extends StatefulWidget {
   const ChooseCompanyScreen({super.key});
@@ -13,106 +32,7 @@ class ChooseCompanyScreen extends StatefulWidget {
 class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
   final TextEditingController searchController = TextEditingController();
 
-  CompanyFilter selectedFilter = CompanyFilter.all;
   final Map<String, Map<String, dynamic>> sharedCartItems = {};
-  final List<Map<String, dynamic>> companies = [
-    {
-      "name": "GSK العالمية",
-      "productsCount": 450,
-      "offers": 5,
-      "image": "assets/images/gsk.png",
-
-      "products": <Map<String, dynamic>>[
-        {
-          "name": "أوغمنتين 1 جم",
-          "scientificName": "Amoxicillin / Clavulanic Acid",
-          "description": "14 حبة",
-          "expiry": "12/2027",
-          "price": 85.50,
-          "oldPrice": 95.00,
-          "image": "assets/images/augmentin.png",
-          "basicOffer": null,
-        },
-        {
-          "name": "فولتارين جل",
-          "scientificName": "Diclofenac",
-          "description": "أنبوب 50 غرام",
-          "expiry": "08/2028",
-          "price": 22.00,
-          "oldPrice": null,
-          "image": "assets/images/voltaren.png",
-          "basicOffer": {
-            "isActive": true,
-            "buyQuantity": 10,
-            "freeQuantity": 2,
-          },
-        },
-      ],
-    },
-    {
-      "name": "حما فارما",
-      "productsCount": 1200,
-      "offers": 0,
-      "image": "assets/images/hama.png",
-
-      "products": <Map<String, dynamic>>[
-        {
-          "name": "باراسيتامول",
-          "scientificName": "Paracetamol",
-          "description": "20 حبة - 500 ملغ",
-          "expiry": "06/2028",
-          "price": 12.50,
-          "oldPrice": null,
-          "image": "assets/images/paracetamol.png",
-          "basicOffer": {
-            "isActive": true,
-            "buyQuantity": 10,
-            "freeQuantity": 2,
-          },
-        },
-        {
-          "name": "أموكسيسيلين",
-          "scientificName": "Amoxicillin",
-          "description": "كبسولات 500 ملغ",
-          "expiry": "09/2027",
-          "price": 28.00,
-          "oldPrice": null,
-          "image": "assets/images/amoxicillin.png",
-          "basicOffer": null,
-        },
-      ],
-    },
-  ];
-  List<Map<String, dynamic>> get filteredCompanies {
-    final searchText = searchController.text.trim().toLowerCase();
-
-    List<Map<String, dynamic>> result = companies.where((company) {
-      final companyName = company["name"].toString().toLowerCase();
-
-      return companyName.contains(searchText);
-    }).toList();
-
-    switch (selectedFilter) {
-      case CompanyFilter.hasOffers:
-        result = result.where((company) => company["offers"] > 0).toList();
-        break;
-
-      case CompanyFilter.noOffers:
-        result = result.where((company) => company["offers"] == 0).toList();
-        break;
-
-      case CompanyFilter.mostProducts:
-        result.sort(
-          (a, b) => (b["products"] as int).compareTo(a["products"] as int),
-        );
-        break;
-
-      case CompanyFilter.all:
-        break;
-    }
-
-    return result;
-  }
 
   @override
   void dispose() {
@@ -122,8 +42,6 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final visibleCompanies = filteredCompanies;
-
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -131,9 +49,6 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.white,
-
-        
-
         title: const Text(
           "اختيار الشركة",
           style: TextStyle(
@@ -142,115 +57,155 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-
-   
-      
       ),
 
       body: Directionality(
         textDirection: TextDirection.rtl,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
-              child: TextField(
-                controller: searchController,
-                onChanged: (_) {
-                  setState(() {});
-                },
-                decoration: InputDecoration(
-                  hintText: "ابحث عن اسم الشركة...",
-                  hintStyle: TextStyle(
-                    color: Colors.grey.shade500,
-                    fontSize: 14,
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.search,
+        child: BlocBuilder<CompaniesBloc, CompaniesState>(
+          builder: (context, state) {
+            if (state.status == CompaniesStatus.loading) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+
+            if (state.status == CompaniesStatus.failure) {
+              return Center(
+                child: Text(
+                  state.errorMessage ?? "حدث خطأ غير متوقع",
+                  style: const TextStyle(
                     color: Color(0xff0A2954),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
-                  suffixIcon: searchController.text.isNotEmpty
-                      ? IconButton(
-                          onPressed: () {
-                            searchController.clear();
-                            setState(() {});
-                          },
-                          icon: const Icon(Icons.close, size: 20),
-                        )
-                      : null,
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xff0A2954),
-                      width: 1.4,
+                ),
+              );
+            }
+
+            final visibleCompanies = state.visibleCompanies;
+
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+                  child: TextField(
+                    controller: searchController,
+                    onChanged: (value) {
+                      context
+                          .read<CompaniesBloc>()
+                          .add(CompaniesSearchChanged(value));
+                    },
+                    decoration: InputDecoration(
+                      hintText: "ابحث عن اسم الشركة...",
+                      hintStyle: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 14,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Color(0xff0A2954),
+                      ),
+                      suffixIcon: searchController.text.isNotEmpty
+                          ? IconButton(
+                              onPressed: () {
+                                searchController.clear();
+                                context
+                                    .read<CompaniesBloc>()
+                                    .add(CompaniesSearchChanged(""));
+                                setState(() {});
+                              },
+                              icon: const Icon(Icons.close, size: 20),
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding:
+                          const EdgeInsets.symmetric(vertical: 12),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color(0xff0A2954),
+                          width: 1.4,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
 
-            SizedBox(
-              height: 42,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                children: [
-                  _buildFilterChip(title: "الكل", filter: CompanyFilter.all),
-                  _buildFilterChip(
-                    title: "لديها عروض",
-                    filter: CompanyFilter.hasOffers,
+                SizedBox(
+                  height: 42,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    children: [
+                      _buildFilterChip(
+                        context: context,
+                        title: "الكل",
+                        filter: CompanyFilter.all,
+                        selectedFilter: state.selectedFilter,
+                      ),
+                      _buildFilterChip(
+                        context: context,
+                        title: "لديها عروض",
+                        filter: CompanyFilter.hasOffers,
+                        selectedFilter: state.selectedFilter,
+                      ),
+                      _buildFilterChip(
+                        context: context,
+                        title: "بدون عروض",
+                        filter: CompanyFilter.noOffers,
+                        selectedFilter: state.selectedFilter,
+                      ),
+                      _buildFilterChip(
+                        context: context,
+                        title: "الأكثر منتجات",
+                        filter: CompanyFilter.mostProducts,
+                        selectedFilter: state.selectedFilter,
+                      ),
+                    ],
                   ),
-                  _buildFilterChip(
-                    title: "بدون عروض",
-                    filter: CompanyFilter.noOffers,
-                  ),
-                  _buildFilterChip(
-                    title: "الأكثر منتجات",
-                    filter: CompanyFilter.mostProducts,
-                  ),
-                ],
-              ),
-            ),
+                ),
 
-            const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-            Expanded(
-              child: visibleCompanies.isEmpty
-                  ? _buildEmptyState()
-                  : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(14, 4, 14, 20),
-                      itemCount: visibleCompanies.length,
-
-                      // تظل GridView ولكن بعمود واحد
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
+                Expanded(
+                  child: visibleCompanies.isEmpty
+                      ? _buildEmptyState()
+                      : GridView.builder(
+                          padding:
+                              const EdgeInsets.fromLTRB(14, 4, 14, 20),
+                          itemCount: visibleCompanies.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 1,
                             mainAxisSpacing: 12,
                             mainAxisExtent: 175,
                           ),
+                          itemBuilder: (context, index) {
+                            final company = visibleCompanies[index];
 
-                      itemBuilder: (context, index) {
-                        final company = visibleCompanies[index];
-
-                        return _buildCompanyCard(context, company);
-                      },
-                    ),
-            ),
-          ],
+                            return _buildCompanyCard(context, company);
+                          },
+                        ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
   Widget _buildFilterChip({
+    required BuildContext context,
     required String title,
     required CompanyFilter filter,
+    required CompanyFilter selectedFilter,
   }) {
     final isSelected = selectedFilter == filter;
 
@@ -261,14 +216,16 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
         showCheckmark: false,
         label: Text(title),
         onSelected: (_) {
-          setState(() {
-            selectedFilter = filter;
-          });
+          context.read<CompaniesBloc>().add(
+                CompaniesFilterChanged(filter),
+              );
         },
         backgroundColor: const Color(0xffE8F0FC),
         selectedColor: const Color(0xff0A2954),
         side: BorderSide.none,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
         labelStyle: TextStyle(
           color: isSelected ? Colors.white : const Color(0xff53657E),
           fontSize: 12,
@@ -279,8 +236,11 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
     );
   }
 
-  Widget _buildCompanyCard(BuildContext context, Map<String, dynamic> company) {
-    final int offers = company["offers"];
+  Widget _buildCompanyCard(
+    BuildContext context,
+    CompanyModel company,
+  ) {
+    final int offers = company.offers;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -313,10 +273,12 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xffF5F7FC),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xffEDF0F5)),
+                          border: Border.all(
+                            color: const Color(0xffEDF0F5),
+                          ),
                         ),
                         child: Image.asset(
-                          company["image"],
+                          company.image,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
                             return const Icon(
@@ -337,7 +299,7 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                company["name"],
+                                company.name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -348,7 +310,7 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                "${company["productsCount"]} منتج متاح",
+                                "${company.productsCount} منتج متاح",
                                 style: TextStyle(
                                   color: Colors.grey.shade600,
                                   fontSize: 13,
@@ -381,7 +343,9 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          offers > 0 ? Icons.access_time : Icons.info_outline,
+                          offers > 0
+                              ? Icons.access_time
+                              : Icons.info_outline,
                           size: 14,
                           color: offers > 0
                               ? const Color(0xff26A76F)
@@ -389,7 +353,9 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          offers > 0 ? "$offers عروض فعالة" : "لا توجد عروض",
+                          offers > 0
+                              ? "$offers عروض فعالة"
+                              : "لا توجد عروض",
                           style: TextStyle(
                             color: offers > 0
                                 ? const Color(0xff26A76F)
@@ -411,13 +377,11 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
             height: 43,
             child: ElevatedButton(
               onPressed: () {
-                // الانتقال إلى أدوية هذه الشركة
-                // مثال:
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => CompanyProductsScreen(
-                      company: company,
+                      company: company.toMap(),
                       cartItems: sharedCartItems,
                     ),
                   ),
@@ -436,7 +400,10 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
                 children: [
                   Text(
                     "عرض الأدوية",
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   SizedBox(width: 8),
                   Icon(Icons.chevron_left, size: 21),
@@ -454,7 +421,11 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.business_outlined, size: 65, color: Colors.grey.shade400),
+          Icon(
+            Icons.business_outlined,
+            size: 65,
+            color: Colors.grey.shade400,
+          ),
           const SizedBox(height: 12),
           const Text(
             "لا توجد شركات مطابقة",

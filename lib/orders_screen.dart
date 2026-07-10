@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:project_2/ChooseCompanyScreen.dart';
+import 'package:project_2/Features/auth/presentation/ChooseCompanyScreen.dart';
 import 'package:project_2/order_details_screen.dart';
 import 'package:project_2/orders_archive_screen.dart';
 import 'package:project_2/orders_store.dart';
@@ -13,7 +13,6 @@ class OrdersScreen extends StatefulWidget {
 }
 
 class _OrdersScreenState extends State<OrdersScreen> {
-
   final List<Map<String, dynamic>> orders = [
     {
       "pharmacy": "صيدلية الشفاء المركزية",
@@ -43,11 +42,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-
         backgroundColor: const Color(0xffF5F6FA),
 
         appBar: AppBar(
@@ -64,12 +61,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ),
           ),
 
-
           actions: [
-
             Stack(
               children: [
-
                 IconButton(
                   icon: const Icon(
                     Icons.shopping_cart_outlined,
@@ -92,34 +86,27 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     child: const Center(
                       child: Text(
                         "3",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 11),
                       ),
                     ),
                   ),
-                )
+                ),
               ],
             ),
-
           ],
         ),
 
         body: SingleChildScrollView(
-
           child: Padding(
             padding: const EdgeInsets.all(18),
 
             child: Column(
-
               children: [
-
                 ////////////////////////////////////////////////
                 /// Welcome Card
                 ////////////////////////////////////////////////
 
-            /// Welcome Card
+                /// Welcome Card
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
@@ -137,7 +124,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                     //ربط
+                      //ربط
                       Text(
                         "مرحباً، أحمد محمد",
                         style: TextStyle(
@@ -147,243 +134,236 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         ),
                       ),
                       SizedBox(height: 6),
+
                       //ربط
-                 
-                      
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 22),////////////////////////////////////////////////
-/// Create Order Card
-////////////////////////////////////////////////
+                const SizedBox(
+                  height: 22,
+                ), ////////////////////////////////////////////////
+                /// Create Order Card
+                ////////////////////////////////////////////////
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChooseCompanyPage(),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(22),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22,
+                      vertical: 28,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff082B63),
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      textDirection: TextDirection.rtl,
+                      children: [
+                        const Icon(
+                          Icons.arrow_back_ios_new,
+                          color: Colors.white,
+                        ),
 
-InkWell(
-  onTap: () {
-    Navigator.push(context, MaterialPageRoute(
-          builder: (context) =>  ChooseCompanyScreen ()));
-  },
-  borderRadius: BorderRadius.circular(22),
-  child: Container(
-    width: double.infinity,
-    padding: const EdgeInsets.symmetric(
-      horizontal: 22,
-      vertical: 28,
-    ),
-    decoration: BoxDecoration(
-      color: const Color(0xff082B63),
-      borderRadius: BorderRadius.circular(22),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.grey.withOpacity(.25),
-          blurRadius: 8,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Row(
-      textDirection: TextDirection.rtl,
-      children: [
+                        const Spacer(),
 
-        const Icon(
-          Icons.arrow_back_ios_new,
-          color: Colors.white,
-        ),
+                        const Text(
+                          "إنشاء طلبية جديدة",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 25,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
 
-        const Spacer(),
+                        const SizedBox(width: 18),
 
-        const Text(
-          "إنشاء طلبية جديدة",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 25,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(.15),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.add_shopping_cart,
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
-        const SizedBox(width: 18),
+                const SizedBox(height: 22),
 
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(.15),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: const Icon(
-            Icons.add_shopping_cart,
-            color: Colors.white,
-            size: 30,
-          ),
-        ),
-      ],
-    ),
-  ),
-),
+                ////////////////////////////////////////////////
+                /// Two Cards
+                ////////////////////////////////////////////////
+                Row(
+                  children: [
+                    Expanded(
+                      child: _menuCard(
+                        title: "أرشيف الطلبات",
+                        icon: Icons.history,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const OrdersArchiveScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
 
-const SizedBox(height: 22),
+                    const SizedBox(width: 16),
 
-////////////////////////////////////////////////
-/// Two Cards
-////////////////////////////////////////////////
+                    Expanded(
+                      child: _menuCard(
+                        title: "حالة الطلبات",
+                        icon: Icons.assignment_outlined,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => OrdersTrackingScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
 
-Row(
-  children: [
+                const SizedBox(height: 22),
 
-    Expanded(
-      child: _menuCard(
-        title: "أرشيف الطلبات",
-        icon: Icons.history,
-        onTap: () {
-          Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (_) => const OrdersArchiveScreen(),
-  ),
-);
-        },
-      ),
-    ),
+                ////////////////////////////////////////////////
+                /// آخر الطلبات
+                ////////////////////////////////////////////////
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "آخر الطلبات",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
 
-    const SizedBox(width: 16),
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const OrdersArchiveScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        "عرض الكل",
+                        style: TextStyle(
+                          color: Color(0xff082B63),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
 
-    Expanded(
-      child: _menuCard(
-        title: "حالة الطلبات",
-        icon: Icons.assignment_outlined,
-        onTap: () {
-           Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => OrdersTrackingScreen(
-      
-      ),
-    ),
-  );
-        },
-      ),
-    ),
+                const SizedBox(height: 15),
 
-  ],
-),
+                ValueListenableBuilder<List<Map<String, dynamic>>>(
+                  valueListenable: OrdersStore.instance.ordersNotifier,
+                  builder: (context, storedOrders, child) {
+                    // نعمل نسخة حتى لا نغيّر ترتيب القائمة الأصلية.
+                    final latestOrders = List<Map<String, dynamic>>.from(
+                      storedOrders,
+                    );
 
-const SizedBox(height: 22),
+                    // ترتيب الطلبات من الأحدث إلى الأقدم.
+                    latestOrders.sort((firstOrder, secondOrder) {
+                      final firstDate = _parseOrderDate(
+                        firstOrder["date"] ?? firstOrder["createdAt"],
+                      );
 
+                      final secondDate = _parseOrderDate(
+                        secondOrder["date"] ?? secondOrder["createdAt"],
+                      );
 
+                      return secondDate.compareTo(firstDate);
+                    });
 
-////////////////////////////////////////////////
-/// آخر الطلبات
-////////////////////////////////////////////////
+                    // نأخذ أحدث 3 طلبات فقط.
+                    final lastThreeOrders = latestOrders.take(3).toList();
 
-Row(
-  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  children: [
-    const Text(
-      "آخر الطلبات",
-      style: TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
+                    if (lastThreeOrders.isEmpty) {
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 35,
+                          horizontal: 20,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: const Column(
+                          children: [
+                            Icon(
+                              Icons.inventory_2_outlined,
+                              size: 45,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              "لا توجد طلبات حتى الآن",
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
 
-    InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const OrdersArchiveScreen(),
-          ),
-        );
-      },
-      child: const Text(
-        "عرض الكل",
-        style: TextStyle(
-          color: Color(0xff082B63),
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    ),
-  ],
-),
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: lastThreeOrders.length,
+                      itemBuilder: (context, index) {
+                        final order = lastThreeOrders[index];
 
-const SizedBox(height: 15),
+                        return _orderCard(context, order);
+                      },
+                    );
+                  },
+                ),
 
-ValueListenableBuilder<List<Map<String, dynamic>>>(
-  valueListenable: OrdersStore.instance.ordersNotifier,
-  builder: (context, storedOrders, child) {
-    // نعمل نسخة حتى لا نغيّر ترتيب القائمة الأصلية.
-    final latestOrders =
-        List<Map<String, dynamic>>.from(storedOrders);
+                const SizedBox(height: 30),
 
-    // ترتيب الطلبات من الأحدث إلى الأقدم.
-    latestOrders.sort((firstOrder, secondOrder) {
-      final firstDate = _parseOrderDate(
-        firstOrder["date"] ?? firstOrder["createdAt"],
-      );
-
-      final secondDate = _parseOrderDate(
-        secondOrder["date"] ?? secondOrder["createdAt"],
-      );
-
-      return secondDate.compareTo(firstDate);
-    });
-
-    // نأخذ أحدث 3 طلبات فقط.
-    final lastThreeOrders = latestOrders.take(3).toList();
-
-    if (lastThreeOrders.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-          vertical: 35,
-          horizontal: 20,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: const Column(
-          children: [
-            Icon(
-              Icons.inventory_2_outlined,
-              size: 45,
-              color: Colors.grey,
-            ),
-            SizedBox(height: 10),
-            Text(
-              "لا توجد طلبات حتى الآن",
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 15,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: lastThreeOrders.length,
-      itemBuilder: (context, index) {
-        final order = lastThreeOrders[index];
-
-        return _orderCard(order);
-      },
-    );
-  },
-),
-
-
-
-const SizedBox(height: 30),
                 /// الأجزاء التالية سنضيفها بالرسالة القادمة
               ],
-
             ),
           ),
         ),
-
       ),
     );
   }
@@ -395,9 +375,7 @@ Widget _menuCard({
   required VoidCallback onTap,
 }) {
   return InkWell(
-    onTap: (){
-      
-    },
+    onTap: onTap,
     borderRadius: BorderRadius.circular(18),
     child: Container(
       height: 120,
@@ -415,12 +393,7 @@ Widget _menuCard({
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-
-          Icon(
-            icon,
-            size: 42,
-            color: const Color(0xff082B63),
-          ),
+          Icon(icon, size: 42, color: const Color(0xff082B63)),
 
           const SizedBox(height: 16),
 
@@ -433,20 +406,19 @@ Widget _menuCard({
               color: Color(0xff082B63),
             ),
           ),
-
         ],
       ),
     ),
   );
 }
+
 DateTime _parseOrderDate(dynamic value) {
   if (value is DateTime) {
     return value;
   }
 
   if (value is String) {
-    return DateTime.tryParse(value) ??
-        DateTime.fromMillisecondsSinceEpoch(0);
+    return DateTime.tryParse(value) ?? DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   if (value is int) {
@@ -524,7 +496,8 @@ double _parseOrderPrice(dynamic value) {
 
   return double.tryParse(value?.toString() ?? '') ?? 0;
 }
-Widget _orderCard(Map<String, dynamic> order) {
+
+Widget _orderCard(BuildContext context, Map<String, dynamic> order) {
   final pharmacyName =
       order["pharmacyName"]?.toString() ??
       order["pharmacy"]?.toString() ??
@@ -537,22 +510,14 @@ Widget _orderCard(Map<String, dynamic> order) {
       "بدون رقم";
 
   final totalAmount = _parseOrderPrice(
-    order["totalAmount"] ??
-        order["price"] ??
-        order["total"],
+    order["totalAmount"] ?? order["price"] ?? order["total"],
   );
 
-  final orderDate = _parseOrderDate(
-    order["date"] ?? order["createdAt"],
-  );
+  final orderDate = _parseOrderDate(order["date"] ?? order["createdAt"]);
 
-  final statusText = _getStatusText(
-    order["status"],
-  );
+  final statusText = _getStatusText(order["status"]);
 
-  final statusColor = _getStatusColor(
-    order["status"],
-  );
+  final statusColor = _getStatusColor(order["status"]);
 
   return Container(
     margin: const EdgeInsets.only(bottom: 15),
@@ -584,10 +549,7 @@ Widget _orderCard(Map<String, dynamic> order) {
             ),
 
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: statusColor.withOpacity(.15),
                 borderRadius: BorderRadius.circular(20),
@@ -605,10 +567,7 @@ Widget _orderCard(Map<String, dynamic> order) {
 
         const SizedBox(height: 15),
 
-        Text(
-          "رقم الطلب : $orderNumber",
-          style: const TextStyle(fontSize: 16),
-        ),
+        Text("رقم الطلب : $orderNumber", style: const TextStyle(fontSize: 16)),
 
         const SizedBox(height: 8),
 
@@ -630,19 +589,22 @@ Widget _orderCard(Map<String, dynamic> order) {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-         },
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OrderDetailsScreen(orderNumber: orderNumber),
+                ),
+              );
+            },
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  const Color(0xff082B63),
+              backgroundColor: const Color(0xff082B63),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
             child: const Text(
               "عرض التفاصيل",
-              style: TextStyle(
-                color: Colors.white,
-              ),
+              style: TextStyle(color: Colors.white),
             ),
           ),
         ),

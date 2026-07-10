@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:project_2/Home_page.dart';
 import 'package:project_2/orders_screen.dart';
-import 'package:project_2/payments_screen.dart';
+import 'package:project_2/collection_home_screen.dart';
 import 'package:project_2/pharmacies_screen.dart';
 
 class HomeScreen2 extends StatefulWidget {
@@ -17,7 +17,7 @@ class _HomeScreenState2 extends State<HomeScreen2> {
   final List<Widget> pages = [
     const HomeScreen(),
     OrdersScreen(),
-    PaymentsScreen(),
+    CollectionHomeScreen(),
     PharmaciesScreen(),
   ];
 

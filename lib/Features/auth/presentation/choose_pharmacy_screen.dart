@@ -1,81 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:project_2/Features/auth/bloc/pharmacies_bloc.dart';
+import 'package:project_2/Features/auth/bloc/pharmacies_event.dart';
+import 'package:project_2/Features/auth/bloc/pharmacies_state.dart';
+import 'package:project_2/Features/auth/data/repositories/pharmacies_repository.dart';
 
-class ChoosePharmacyScreen extends StatefulWidget {
-  const ChoosePharmacyScreen({super.key});
+
+
+class ChoosePharmacyPage extends StatelessWidget {
+  final double currentOrderTotal;
+
+  const ChoosePharmacyPage({
+    super.key,
+    this.currentOrderTotal = 0,
+  });
 
   @override
-  State<ChoosePharmacyScreen> createState() =>
-      _ChoosePharmacyScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => PharmaciesBloc(PharmaciesRepository())
+        ..add(PharmaciesStarted()),
+      child: ChoosePharmacyScreen(
+        currentOrderTotal: currentOrderTotal,
+      ),
+    );
+  }
 }
 
-class _ChoosePharmacyScreenState
-    extends State<ChoosePharmacyScreen> {
-  final TextEditingController searchController =
-      TextEditingController();
+class ChoosePharmacyScreen extends StatefulWidget {
+  final double currentOrderTotal;
 
-  String selectedArea = "الكل";
+  const ChoosePharmacyScreen({
+    super.key,
+    this.currentOrderTotal = 0,
+  });
 
-  final List<Map<String, dynamic>> pharmacies = [
-    {
-      "name": "صيدلية النهدي",
-      "branch": "فرع الملقا",
-      "area": "حي الملقا",
-      "address": "طريق أنس بن مالك، الرياض",
-      "dueAmount": 1250.00,
-      "image": "assets/images/pharmacy1.png",
-    },
-    {
-      "name": "صيدلية الدواء",
-      "branch": "فرع الياسمين",
-      "area": "حي الياسمين",
-      "address": "شارع التخصصي، الرياض",
-      "dueAmount": 0.00,
-      "image": "assets/images/pharmacy2.png",
-    },
-    {
-      "name": "صيدلية غاية",
-      "branch": "المركزية",
-      "area": "حي الملقا",
-      "address": "حي قرطبة، الرياض",
-      "dueAmount": 420.50,
-      "image": "assets/images/pharmacy3.png",
-    },
-  ];
+  @override
+  State<ChoosePharmacyScreen> createState() => _ChoosePharmacyScreenState();
+}
 
-  List<String> get areas {
-    final uniqueAreas = pharmacies
-        .map((pharmacy) => pharmacy["area"].toString())
-        .toSet()
-        .toList();
+class _ChoosePharmacyScreenState extends State<ChoosePharmacyScreen> {
+  final TextEditingController searchController = TextEditingController();
 
-    return ["الكل", ...uniqueAreas];
-  }
+  double _asDouble(dynamic value) {
+    if (value is num) {
+      return value.toDouble();
+    }
 
-  List<Map<String, dynamic>> get filteredPharmacies {
-    final searchText =
-        searchController.text.trim().toLowerCase();
-
-    return pharmacies.where((pharmacy) {
-      final name =
-          pharmacy["name"].toString().toLowerCase();
-      final branch =
-          pharmacy["branch"].toString().toLowerCase();
-      final address =
-          pharmacy["address"].toString().toLowerCase();
-      final area =
-          pharmacy["area"].toString().toLowerCase();
-
-      final matchesSearch =
-          name.contains(searchText) ||
-          branch.contains(searchText) ||
-          address.contains(searchText);
-
-      final matchesArea = selectedArea == "الكل"
-          ? true
-          : area == selectedArea;
-
-      return matchesSearch && matchesArea;
-    }).toList();
+    return double.tryParse(value?.toString() ?? "") ?? 0;
   }
 
   @override
@@ -86,8 +58,6 @@ class _ChoosePharmacyScreenState
 
   @override
   Widget build(BuildContext context) {
-    final pharmaciesList = filteredPharmacies;
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -105,45 +75,68 @@ class _ChoosePharmacyScreenState
               fontWeight: FontWeight.bold,
             ),
           ),
-          leading:  
-            IconButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              icon: const Icon(
-                Icons.arrow_forward,
-                size: 18,
-                color: Color(0xff1C2B4A),
-              ),
+          leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(
+              Icons.arrow_forward,
+              size: 18,
+              color: Color(0xff1C2B4A),
             ),
-         
+          ),
         ),
-        body: Column(
-          children: [
-            _buildSearchField(),
-            _buildAreaFilters(),
-            const SizedBox(height: 8),
-            Expanded(
-              child: pharmaciesList.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(
-                        12,
-                        6,
-                        12,
-                        20,
-                      ),
-                      itemCount: pharmaciesList.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        return _buildPharmacyCard(
-                          pharmaciesList[index],
-                        );
-                      },
-                    ),
-            ),
-          ],
+        body: BlocBuilder<PharmaciesBloc, PharmaciesState>(
+          builder: (context, state) {
+            if (state.status == PharmaciesStatus.loading) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+
+            if (state.status == PharmaciesStatus.failure) {
+              return Center(
+                child: Text(
+                  state.errorMessage ?? "حدث خطأ أثناء تحميل الصيدليات",
+                  style: const TextStyle(
+                    color: Color(0xff0A2954),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              );
+            }
+
+            final pharmaciesList = state.visiblePharmacies;
+
+            return Column(
+              children: [
+                _buildSearchField(),
+                _buildAreaFilters(state),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: pharmaciesList.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(
+                            12,
+                            6,
+                            12,
+                            20,
+                          ),
+                          itemCount: pharmaciesList.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            return _buildPharmacyCard(
+                              pharmaciesList[index].toMap(),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -159,8 +152,10 @@ class _ChoosePharmacyScreenState
       ),
       child: TextField(
         controller: searchController,
-        onChanged: (_) {
-          setState(() {});
+        onChanged: (value) {
+          context.read<PharmaciesBloc>().add(
+                PharmaciesSearchChanged(value),
+              );
         },
         decoration: InputDecoration(
           hintText: "ابحث عن صيدلية...",
@@ -172,6 +167,18 @@ class _ChoosePharmacyScreenState
             Icons.search,
             color: Color(0xff7A869A),
           ),
+          suffixIcon: searchController.text.isNotEmpty
+              ? IconButton(
+                  onPressed: () {
+                    searchController.clear();
+                    context.read<PharmaciesBloc>().add(
+                          PharmaciesSearchChanged(""),
+                        );
+                    setState(() {});
+                  },
+                  icon: const Icon(Icons.close, size: 19),
+                )
+              : null,
           filled: true,
           fillColor: Colors.white,
           contentPadding: const EdgeInsets.symmetric(
@@ -195,7 +202,15 @@ class _ChoosePharmacyScreenState
     );
   }
 
-  Widget _buildAreaFilters() {
+  Widget _buildAreaFilters(PharmaciesState state) {
+    final areas = state.pharmacies
+        .map((pharmacy) => pharmacy.area)
+        .where((area) => area.trim().isNotEmpty)
+        .toSet()
+        .toList();
+
+    final allAreas = ["الكل", ...areas];
+
     return SizedBox(
       height: 42,
       child: ListView.builder(
@@ -203,10 +218,10 @@ class _ChoosePharmacyScreenState
         padding: const EdgeInsets.symmetric(
           horizontal: 12,
         ),
-        itemCount: areas.length,
+        itemCount: allAreas.length,
         itemBuilder: (context, index) {
-          final area = areas[index];
-          final isSelected = selectedArea == area;
+          final area = allAreas[index];
+          final isSelected = state.selectedArea == area;
 
           return Padding(
             padding: const EdgeInsets.only(left: 8),
@@ -214,9 +229,9 @@ class _ChoosePharmacyScreenState
               selected: isSelected,
               showCheckmark: false,
               onSelected: (_) {
-                setState(() {
-                  selectedArea = area;
-                });
+                context.read<PharmaciesBloc>().add(
+                      PharmaciesAreaChanged(area),
+                    );
               },
               label: Text(area),
               backgroundColor: Colors.white,
@@ -230,9 +245,7 @@ class _ChoosePharmacyScreenState
                 borderRadius: BorderRadius.circular(20),
               ),
               labelStyle: TextStyle(
-                color: isSelected
-                    ? Colors.white
-                    : const Color(0xff53657E),
+                color: isSelected ? Colors.white : const Color(0xff53657E),
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -246,10 +259,15 @@ class _ChoosePharmacyScreenState
   Widget _buildPharmacyCard(
     Map<String, dynamic> pharmacy,
   ) {
-    final double dueAmount =
-        (pharmacy["dueAmount"] as num).toDouble();
+    final double dueAmount = _asDouble(pharmacy["dueAmount"]);
 
-    final bool hasDebt = dueAmount > 0;
+    final double balanceToShow =
+        widget.currentOrderTotal > 0 ? widget.currentOrderTotal : dueAmount;
+
+    final bool hasDebt = balanceToShow > 0;
+
+    final String balanceTitle =
+        widget.currentOrderTotal > 0 ? "رصيد الطلبية" : "الرصيد المستحق";
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -274,8 +292,7 @@ class _ChoosePharmacyScreenState
           const SizedBox(width: 10),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   "${pharmacy["name"]} - ${pharmacy["branch"]}",
@@ -313,20 +330,24 @@ class _ChoosePharmacyScreenState
                         height: 38,
                         child: ElevatedButton(
                           onPressed: () {
-                             Navigator.pop(
-    context,
-    Map<String, dynamic>.from(pharmacy),
-  );
+                            final selectedPharmacy =
+                                Map<String, dynamic>.from(pharmacy);
+
+                            selectedPharmacy["dueAmount"] = balanceToShow;
+                            selectedPharmacy["orderBalance"] =
+                                widget.currentOrderTotal;
+
+                            Navigator.pop(
+                              context,
+                              selectedPharmacy,
+                            );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                const Color(0xff0A2954),
+                            backgroundColor: const Color(0xff0A2954),
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            shape:
-                                RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
                                 22,
                               ),
                             ),
@@ -335,8 +356,7 @@ class _ChoosePharmacyScreenState
                             "اختيار الصيدلية",
                             style: TextStyle(
                               fontSize: 13,
-                              fontWeight:
-                                  FontWeight.bold,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -344,19 +364,18 @@ class _ChoosePharmacyScreenState
                     ),
                     const SizedBox(width: 12),
                     Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text(
-                          "الرصيد المستحق",
-                          style: TextStyle(
+                        Text(
+                          balanceTitle,
+                          style: const TextStyle(
                             color: Color(0xff7D8898),
                             fontSize: 11,
                           ),
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          "${dueAmount.toStringAsFixed(2)} ر.س",
+                          "${balanceToShow.toStringAsFixed(2)} ر.س",
                           style: TextStyle(
                             color: hasDebt
                                 ? const Color(0xffD63B35)

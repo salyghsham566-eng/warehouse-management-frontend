@@ -48,17 +48,84 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
     return _numberValue(value);
   }
 
-  bool get hasOffer {
-    return oldPrice != null && oldPrice! > price;
+  int _asInt(dynamic value) {
+  if (value is int) {
+    return value;
   }
 
-  int get discountPercentage {
-    if (!hasOffer || oldPrice == 0) {
-      return 0;
-    }
-
-    return (((oldPrice! - price) / oldPrice!) * 100).round();
+  if (value is num) {
+    return value.toInt();
   }
+
+  return int.tryParse(value?.toString() ?? "") ?? 0;
+}
+
+Map<String, int>? get basicOffer {
+  final dynamic offerData = widget.product["basicOffer"];
+
+  if (offerData is! Map) {
+    return null;
+  }
+
+  final int buyQuantity = _asInt(offerData["buyQuantity"]);
+  final int freeQuantity = _asInt(offerData["freeQuantity"]);
+
+  if (buyQuantity <= 0 || freeQuantity <= 0) {
+    return null;
+  }
+
+  return {
+    "buyQuantity": buyQuantity,
+    "freeQuantity": freeQuantity,
+  };
+}
+
+bool get hasPriceOffer {
+  return oldPrice != null && oldPrice! > price;
+}
+
+bool get hasBasicOffer {
+  return basicOffer != null;
+}
+
+bool get hasOffer {
+  return hasPriceOffer || hasBasicOffer;
+}
+
+int get discountPercentage {
+  if (!hasPriceOffer || oldPrice == 0) {
+    return 0;
+  }
+
+  return (((oldPrice! - price) / oldPrice!) * 100).round();
+}
+
+int get freeQuantity {
+  final offer = basicOffer;
+
+  if (offer == null) {
+    return 0;
+  }
+
+  final int buyQuantity = offer["buyQuantity"]!;
+  final int freePerOffer = offer["freeQuantity"]!;
+
+  return (quantity ~/ buyQuantity) * freePerOffer;
+}
+
+String get offerText {
+  if (hasPriceOffer) {
+    return "عرض خاص - خصم $discountPercentage%";
+  }
+
+  final offer = basicOffer;
+
+  if (offer != null) {
+    return "عرض: كل ${offer["buyQuantity"]} + ${offer["freeQuantity"]} مجاني";
+  }
+
+  return "";
+}
 
   double get totalPrice {
     return price * quantity;
@@ -149,7 +216,7 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          "عرض خاص - خصم $discountPercentage%",
+                          offerText,
                           style: const TextStyle(
                             color: Color(0xff15965D),
                             fontSize: 11,
@@ -350,54 +417,80 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
     );
   }
 
-  Widget _buildPriceSection() {
-    return _buildSection(
-      title: hasOffer ? "العرض المتوفر" : "السعر",
-      child: Row(
-        children: [
-          if (hasOffer) ...[
-            Text(
-              "${oldPrice!.toStringAsFixed(2)} ر.س",
-              style: TextStyle(
-                color: Colors.grey.shade500,
-                fontSize: 14,
-                decoration: TextDecoration.lineThrough,
-              ),
-            ),
-            const SizedBox(width: 12),
-          ],
-
-          Text(
-            "${price.toStringAsFixed(2)} ر.س",
-            style: const TextStyle(
-              color: Color(0xff169967),
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const Spacer(),
-
-          if (hasOffer)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-              decoration: BoxDecoration(
-                color: const Color(0xffFFF2E3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                "وفّرت ${(oldPrice! - price).toStringAsFixed(2)} ر.س",
-                style: const TextStyle(
-                  color: Color(0xffE78324),
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
+ Widget _buildPriceSection() {
+  return _buildSection(
+    title: hasOffer ? "العرض المتوفر" : "السعر",
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            if (hasPriceOffer) ...[
+              Text(
+                "${oldPrice!.toStringAsFixed(2)} ر.س",
+                style: TextStyle(
+                  color: Colors.grey.shade500,
+                  fontSize: 14,
+                  decoration: TextDecoration.lineThrough,
                 ),
               ),
+              const SizedBox(width: 12),
+            ],
+
+            Text(
+              "${price.toStringAsFixed(2)} ر.س",
+              style: const TextStyle(
+                color: Color(0xff169967),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
+
+            const Spacer(),
+
+            if (hasPriceOffer)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xffFFF2E3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  "وفّرت ${(oldPrice! - price).toStringAsFixed(2)} ر.س",
+                  style: const TextStyle(
+                    color: Color(0xffE78324),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+          ],
+        ),
+
+        if (hasBasicOffer) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: const Color(0xffFFF2E3),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              freeQuantity > 0
+                  ? "حسب الكمية الحالية: $quantity مدفوع + $freeQuantity مجاني"
+                  : offerText,
+              style: const TextStyle(
+                color: Color(0xffE78324),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 
   Widget _buildQuantitySection() {
     return _buildSection(

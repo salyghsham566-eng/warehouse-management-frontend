@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:project_2/OrdersScreen.dart';
-import 'package:project_2/drug_details_screen.dart';
+import 'package:project_2/Features/auth/presentation/drug_details_screen.dart';
 
 enum ProductFilter { all, offers, nooffers, expiry }
 
@@ -220,18 +220,31 @@ class _CompanyProductsScreenState extends State<CompanyProductsScreen> {
     _addProductToCart(product, selectedQuantity);
   }
 
-  List<Map<String, dynamic>> get allProducts {
-    final dynamic productsData = widget.company["products"];
+ List<Map<String, dynamic>> get allProducts {
+  final dynamic productsData = widget.company["products"];
 
-    if (productsData is List) {
-      return productsData
-          .whereType<Map>()
-          .map((product) => Map<String, dynamic>.from(product))
-          .toList();
-    }
-
+  if (productsData == null) {
     return [];
   }
+
+  if (productsData is List) {
+    return productsData.map((product) {
+      if (product is Map<String, dynamic>) {
+        return product;
+      }
+
+      if (product is Map) {
+        return Map<String, dynamic>.from(product);
+      }
+
+      return <String, dynamic>{};
+    }).where((product) {
+      return product.isNotEmpty;
+    }).toList();
+  }
+
+  return [];
+}
 
   List<Map<String, dynamic>> _prepareOrderItems() {
     return widget.cartItems.values.map((cartItem) {
