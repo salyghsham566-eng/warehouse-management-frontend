@@ -1,14 +1,8 @@
-
 import 'package:project_2/Features/auth/data/models/company_model.dart';
 
 import 'companies_event.dart';
 
-enum CompaniesStatus {
-  initial,
-  loading,
-  success,
-  failure,
-}
+enum CompaniesStatus { initial, loading, success, failure }
 
 class CompaniesState {
   final CompaniesStatus status;

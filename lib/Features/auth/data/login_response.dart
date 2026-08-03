@@ -3,11 +3,7 @@ class LoginResponse {
   final String role;
   final String name;
 
-  LoginResponse({
-    required this.token,
-    required this.role,
-    required this.name,
-  });
+  LoginResponse({required this.token, required this.role, required this.name});
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(

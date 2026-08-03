@@ -49,83 +49,80 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
   }
 
   int _asInt(dynamic value) {
-  if (value is int) {
-    return value;
+    if (value is int) {
+      return value;
+    }
+
+    if (value is num) {
+      return value.toInt();
+    }
+
+    return int.tryParse(value?.toString() ?? "") ?? 0;
   }
 
-  if (value is num) {
-    return value.toInt();
+  Map<String, int>? get basicOffer {
+    final dynamic offerData = widget.product["basicOffer"];
+
+    if (offerData is! Map) {
+      return null;
+    }
+
+    final int buyQuantity = _asInt(offerData["buyQuantity"]);
+    final int freeQuantity = _asInt(offerData["freeQuantity"]);
+
+    if (buyQuantity <= 0 || freeQuantity <= 0) {
+      return null;
+    }
+
+    return {"buyQuantity": buyQuantity, "freeQuantity": freeQuantity};
   }
 
-  return int.tryParse(value?.toString() ?? "") ?? 0;
-}
-
-Map<String, int>? get basicOffer {
-  final dynamic offerData = widget.product["basicOffer"];
-
-  if (offerData is! Map) {
-    return null;
+  bool get hasPriceOffer {
+    return oldPrice != null && oldPrice! > price;
   }
 
-  final int buyQuantity = _asInt(offerData["buyQuantity"]);
-  final int freeQuantity = _asInt(offerData["freeQuantity"]);
-
-  if (buyQuantity <= 0 || freeQuantity <= 0) {
-    return null;
+  bool get hasBasicOffer {
+    return basicOffer != null;
   }
 
-  return {
-    "buyQuantity": buyQuantity,
-    "freeQuantity": freeQuantity,
-  };
-}
-
-bool get hasPriceOffer {
-  return oldPrice != null && oldPrice! > price;
-}
-
-bool get hasBasicOffer {
-  return basicOffer != null;
-}
-
-bool get hasOffer {
-  return hasPriceOffer || hasBasicOffer;
-}
-
-int get discountPercentage {
-  if (!hasPriceOffer || oldPrice == 0) {
-    return 0;
+  bool get hasOffer {
+    return hasPriceOffer || hasBasicOffer;
   }
 
-  return (((oldPrice! - price) / oldPrice!) * 100).round();
-}
+  int get discountPercentage {
+    if (!hasPriceOffer || oldPrice == 0) {
+      return 0;
+    }
 
-int get freeQuantity {
-  final offer = basicOffer;
-
-  if (offer == null) {
-    return 0;
+    return (((oldPrice! - price) / oldPrice!) * 100).round();
   }
 
-  final int buyQuantity = offer["buyQuantity"]!;
-  final int freePerOffer = offer["freeQuantity"]!;
+  int get freeQuantity {
+    final offer = basicOffer;
 
-  return (quantity ~/ buyQuantity) * freePerOffer;
-}
+    if (offer == null) {
+      return 0;
+    }
 
-String get offerText {
-  if (hasPriceOffer) {
-    return "عرض خاص - خصم $discountPercentage%";
+    final int buyQuantity = offer["buyQuantity"]!;
+    final int freePerOffer = offer["freeQuantity"]!;
+
+    return (quantity ~/ buyQuantity) * freePerOffer;
   }
 
-  final offer = basicOffer;
+  String get offerText {
+    if (hasPriceOffer) {
+      return "عرض خاص - خصم $discountPercentage%";
+    }
 
-  if (offer != null) {
-    return "عرض: كل ${offer["buyQuantity"]} + ${offer["freeQuantity"]} مجاني";
+    final offer = basicOffer;
+
+    if (offer != null) {
+      return "عرض: كل ${offer["buyQuantity"]} + ${offer["freeQuantity"]} مجاني";
+    }
+
+    return "";
   }
-
-  return "";
-}
 
   double get totalPrice {
     return price * quantity;
@@ -417,80 +414,83 @@ String get offerText {
     );
   }
 
- Widget _buildPriceSection() {
-  return _buildSection(
-    title: hasOffer ? "العرض المتوفر" : "السعر",
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            if (hasPriceOffer) ...[
-              Text(
-                "${oldPrice!.toStringAsFixed(2)} ر.س",
-                style: TextStyle(
-                  color: Colors.grey.shade500,
-                  fontSize: 14,
-                  decoration: TextDecoration.lineThrough,
-                ),
-              ),
-              const SizedBox(width: 12),
-            ],
-
-            Text(
-              "${price.toStringAsFixed(2)} ر.س",
-              style: const TextStyle(
-                color: Color(0xff169967),
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const Spacer(),
-
-            if (hasPriceOffer)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                  color: const Color(0xffFFF2E3),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  "وفّرت ${(oldPrice! - price).toStringAsFixed(2)} ر.س",
-                  style: const TextStyle(
-                    color: Color(0xffE78324),
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+  Widget _buildPriceSection() {
+    return _buildSection(
+      title: hasOffer ? "العرض المتوفر" : "السعر",
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (hasPriceOffer) ...[
+                Text(
+                  "${oldPrice!.toStringAsFixed(2)} ر.س",
+                  style: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 14,
+                    decoration: TextDecoration.lineThrough,
                   ),
                 ),
-              ),
-          ],
-        ),
+                const SizedBox(width: 12),
+              ],
 
-        if (hasBasicOffer) ...[
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: BoxDecoration(
-              color: const Color(0xffFFF2E3),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              freeQuantity > 0
-                  ? "حسب الكمية الحالية: $quantity مدفوع + $freeQuantity مجاني"
-                  : offerText,
-              style: const TextStyle(
-                color: Color(0xffE78324),
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
+              Text(
+                "${price.toStringAsFixed(2)} ر.س",
+                style: const TextStyle(
+                  color: Color(0xff169967),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const Spacer(),
+
+              if (hasPriceOffer)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xffFFF2E3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    "وفّرت ${(oldPrice! - price).toStringAsFixed(2)} ر.س",
+                    style: const TextStyle(
+                      color: Color(0xffE78324),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+
+          if (hasBasicOffer) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: const Color(0xffFFF2E3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                freeQuantity > 0
+                    ? "حسب الكمية الحالية: $quantity مدفوع + $freeQuantity مجاني"
+                    : offerText,
+                style: const TextStyle(
+                  color: Color(0xffE78324),
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
+          ],
         ],
-      ],
-    ),
-  );
-}
+      ),
+    );
+  }
 
   Widget _buildQuantitySection() {
     return _buildSection(

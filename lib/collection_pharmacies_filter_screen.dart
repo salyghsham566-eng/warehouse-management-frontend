@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum CollectionPharmacyFilter {
-  all,
-  hasDebt,
-  paid,
-  pendingPayments,
-}
+enum CollectionPharmacyFilter { all, hasDebt, paid, pendingPayments }
 
 class CollectionPharmaciesFilterScreen extends StatefulWidget {
   const CollectionPharmaciesFilterScreen({super.key});
@@ -139,18 +134,12 @@ class _CollectionPharmaciesFilterScreenState
             onPressed: () {
               Navigator.pop(context);
             },
-            icon: const Icon(
-              Icons.arrow_forward,
-              color: Color(0xff0A2954),
-            ),
+            icon: const Icon(Icons.arrow_forward, color: Color(0xff0A2954)),
           ),
           actions: [
             IconButton(
               onPressed: () {},
-              icon: const Icon(
-                Icons.menu,
-                color: Color(0xff0A2954),
-              ),
+              icon: const Icon(Icons.menu, color: Color(0xff0A2954)),
             ),
           ],
         ),
@@ -192,11 +181,7 @@ class _CollectionPharmaciesFilterScreenState
               color: const Color(0xffE8F0FC),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
-              Icons.tune,
-              color: Color(0xff0A2954),
-              size: 21,
-            ),
+            child: const Icon(Icons.tune, color: Color(0xff0A2954), size: 21),
           ),
 
           const SizedBox(width: 8),
@@ -209,10 +194,7 @@ class _CollectionPharmaciesFilterScreenState
               },
               decoration: InputDecoration(
                 hintText: "ابحث عن صيدلية...",
-                hintStyle: TextStyle(
-                  color: Colors.grey.shade500,
-                  fontSize: 13,
-                ),
+                hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
                 prefixIcon: const Icon(
                   Icons.search,
                   color: Color(0xff7A869A),
@@ -256,10 +238,7 @@ class _CollectionPharmaciesFilterScreenState
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         children: [
-          _buildFilterChip(
-            title: "الكل",
-            filter: CollectionPharmacyFilter.all,
-          ),
+          _buildFilterChip(title: "الكل", filter: CollectionPharmacyFilter.all),
           _buildFilterChip(
             title: "عليها ذمة",
             filter: CollectionPharmacyFilter.hasDebt,
@@ -297,13 +276,9 @@ class _CollectionPharmaciesFilterScreenState
         backgroundColor: Colors.white,
         selectedColor: const Color(0xff0A2954),
         side: BorderSide(
-          color: isSelected
-              ? const Color(0xff0A2954)
-              : const Color(0xffD9E0EA),
+          color: isSelected ? const Color(0xff0A2954) : const Color(0xffD9E0EA),
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         labelStyle: TextStyle(
           color: isSelected ? Colors.white : const Color(0xff53657E),
           fontSize: 12,
@@ -327,9 +302,7 @@ class _CollectionPharmaciesFilterScreenState
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isFavorite
-              ? const Color(0xff0A2954)
-              : const Color(0xffE3E8F0),
+          color: isFavorite ? const Color(0xff0A2954) : const Color(0xffE3E8F0),
           width: isFavorite ? 1.2 : 1,
         ),
         boxShadow: [
@@ -520,10 +493,7 @@ class _CollectionPharmaciesFilterScreenState
             const SizedBox(height: 9),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 7,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               decoration: BoxDecoration(
                 color: const Color(0xffFFF2E3),
                 borderRadius: BorderRadius.circular(8),
@@ -549,10 +519,7 @@ class _CollectionPharmaciesFilterScreenState
     required Color amountColor,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xffF7F9FC),
         borderRadius: BorderRadius.circular(9),
@@ -605,9 +572,7 @@ class _CollectionPharmaciesFilterScreenState
           const SizedBox(height: 5),
           Text(
             "غيّري كلمة البحث أو الفلتر",
-            style: TextStyle(
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(color: Colors.grey.shade600),
           ),
         ],
       ),

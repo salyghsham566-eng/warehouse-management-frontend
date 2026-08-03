@@ -13,8 +13,7 @@ class RepresentativeLoginScreen extends StatefulWidget {
       _RepresentativeLoginScreenState();
 }
 
-class _RepresentativeLoginScreenState
-    extends State<RepresentativeLoginScreen> {
+class _RepresentativeLoginScreenState extends State<RepresentativeLoginScreen> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
@@ -43,12 +42,11 @@ class _RepresentativeLoginScreenState
                       Container(
                         width: double.infinity,
                         constraints: BoxConstraints(
-                          minHeight: MediaQuery.of(context).size.height -
+                          minHeight:
+                              MediaQuery.of(context).size.height -
                               MediaQuery.of(context).padding.vertical,
                         ),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                        ),
+                        decoration: const BoxDecoration(color: Colors.white),
                         child: Column(
                           children: [
                             Stack(
@@ -137,8 +135,9 @@ class _RepresentativeLoginScreenState
                             const SizedBox(height: 38),
 
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 24),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -198,41 +197,41 @@ class _RepresentativeLoginScreenState
                                     alignment: Alignment.centerLeft,
                                     child: TextButton(
                                       onPressed: () {
-                                         showDialog(
-                                          
-      context: context,
-      builder: (dialogContext) {
-        return Directionality(
-         
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.info_outline),
-                SizedBox(width: 8),
-                Text("نسيت كلمة المرور"),
-              ],
-            ),
-            content: const Text(
-              "للاستعلام عن كلمة المرور أو إعادة تعيينها، "
-              "يرجى التواصل مع المشرف مباشرةً.",
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.6,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                },
-                child: const Text("حسناً"),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+                                        showDialog(
+                                          context: context,
+                                          builder: (dialogContext) {
+                                            return Directionality(
+                                              textDirection: TextDirection.rtl,
+                                              child: AlertDialog(
+                                                title: const Row(
+                                                  children: [
+                                                    Icon(Icons.info_outline),
+                                                    SizedBox(width: 8),
+                                                    Text("نسيت كلمة المرور"),
+                                                  ],
+                                                ),
+                                                content: const Text(
+                                                  "للاستعلام عن كلمة المرور أو إعادة تعيينها، "
+                                                  "يرجى التواصل مع المشرف مباشرةً.",
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    height: 1.6,
+                                                  ),
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(
+                                                        dialogContext,
+                                                      ).pop();
+                                                    },
+                                                    child: const Text("حسناً"),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        );
                                       },
                                       child: const Text(
                                         "نسيت كلمة المرور؟",
@@ -246,117 +245,123 @@ class _RepresentativeLoginScreenState
 
                                   const SizedBox(height: 18),
 
+                                  BlocConsumer<LoginBloc, LoginState>(
+                                    listener: (context, state) {
+                                      if (state is LoginSuccess) {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => const HomeScreen2(),
+                                          ),
+                                        );
+                                      }
 
-                                 BlocConsumer<LoginBloc, LoginState>(
-  listener: (context, state) {
-    if (state is LoginSuccess) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const HomeScreen2(),
-        ),
-      );
-    }
+                                      if (state is LoginFailure) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(state.message),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    builder: (context, state) {
+                                      return SizedBox(
+                                        width: double.infinity,
+                                        height: 58,
+                                        child: ElevatedButton.icon(
+                                          onPressed: state is LoginLoading
+                                              ? null
+                                              : () {
+                                                  context.read<LoginBloc>().add(
+                                                    LoginSubmitted(
+                                                      usernameOrPhone:
+                                                          usernameController
+                                                              .text
+                                                              .trim(),
+                                                      password:
+                                                          passwordController
+                                                              .text
+                                                              .trim(),
+                                                    ),
+                                                  );
+                                                },
+                                          icon: state is LoginLoading
+                                              ? const SizedBox(
+                                                  width: 22,
+                                                  height: 22,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        color: Colors.white,
+                                                        strokeWidth: 2,
+                                                      ),
+                                                )
+                                              : const Icon(
+                                                  Icons.login,
+                                                  size: 26,
+                                                ),
+                                          label: Text(
+                                            state is LoginLoading
+                                                ? "جاري تسجيل الدخول..."
+                                                : "تسجيل الدخول",
+                                            style: const TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: navy,
+                                            foregroundColor: Colors.white,
+                                            elevation: 8,
+                                            shadowColor: navy.withOpacity(0.35),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
 
-    if (state is LoginFailure) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(state.message)),
-      );
-    }
-  },
-  builder: (context, state) {
-    return SizedBox(
-      width: double.infinity,
-      height: 58,
-      child: ElevatedButton.icon(
-        onPressed: state is LoginLoading
-            ? null
-            : () {
-                context.read<LoginBloc>().add(
-                  LoginSubmitted(
-                    usernameOrPhone: usernameController.text.trim(),
-                    password: passwordController.text.trim(),
-                  ),
-                );
-              },
-        icon: state is LoginLoading
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : const Icon(Icons.login, size: 26),
-        label: Text(
-          state is LoginLoading
-              ? "جاري تسجيل الدخول..."
-              : "تسجيل الدخول",
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: navy,
-          foregroundColor: Colors.white,
-          elevation: 8,
-          shadowColor: navy.withOpacity(0.35),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-        ),
-      ),
-    );
-  },
-),      
-                                
-                          
+                                  const SizedBox(height: 20),
 
-                                
-                               
-                            
+                                  SizedBox(
+                                    height: 150,
+                                    width: double.infinity,
+                                    child: CustomPaint(
+                                      painter: CityDeliveryPainter(),
+                                    ),
+                                  ),
 
-                            const SizedBox(height: 20),
-
-                            SizedBox(
-                              height: 150,
-                              width: double.infinity,
-                              child: CustomPaint(
-                                painter: CityDeliveryPainter(),
+                                  const SizedBox(height: 8),
+                                ],
                               ),
                             ),
 
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 28),
+
+                            const Text(
+                              "الإصدار 1.0.0",
+                              style: TextStyle(color: grayText, fontSize: 15),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              "جميع الحقوق محفوظة",
+                              style: TextStyle(color: grayText, fontSize: 14),
+                            ),
+
+                            const SizedBox(height: 25),
                           ],
                         ),
                       ),
-
-                      const SizedBox(height: 28),
-
-                      const Text(
-                        "الإصدار 1.0.0",
-                        style: TextStyle(
-                          color: grayText,
-                          fontSize: 15,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        "جميع الحقوق محفوظة",
-                        style: TextStyle(
-                          color: grayText,
-                          fontSize: 14,
-                        ),
-                      ),
-
-                      const SizedBox(height: 25),
                     ],
                   ),
                 ),
-          
-                  ])))])
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -385,22 +390,18 @@ class _LoginField extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: obscureText,
-      style: const TextStyle(
-        color: navy,
-        fontWeight: FontWeight.w600,
-      ),
+      style: const TextStyle(color: navy, fontWeight: FontWeight.w600),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(
-          color: Colors.grey.shade500,
-          fontSize: 15,
-        ),
+        hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 15),
         prefixIcon: Icon(icon, color: navy),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 18,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Color(0xffD8E0EA)),
@@ -560,10 +561,7 @@ class CityDeliveryPainter extends CustomPainter {
       double distance = 0;
       while (distance < metric.length) {
         final next = distance + dashWidth;
-        canvas.drawPath(
-          metric.extractPath(distance, next),
-          paint,
-        );
+        canvas.drawPath(metric.extractPath(distance, next), paint);
         distance += dashWidth + dashSpace;
       }
     }

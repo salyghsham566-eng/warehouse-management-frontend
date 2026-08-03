@@ -2,16 +2,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_2/Features/auth/bloc/profile_event.dart';
 import 'package:project_2/Features/auth/bloc/profile_state.dart';
 import 'package:project_2/Features/auth/data/models/profile_model.dart';
-import 'package:project_2/Features/auth/data/repositories/profile_repository.dart';
-
-
+import 'package:project_2/Features/auth/domain/repositories/profile_repository.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final ProfileRepository profileRepository;
 
-  ProfileBloc({
-    required this.profileRepository,
-  }) : super(ProfileInitial()) {
+  ProfileBloc({required this.profileRepository}) : super(ProfileInitial()) {
     on<ProfileRequested>(_loadProfile);
     on<ProfileUpdateRequested>(_updateProfile);
   }
@@ -27,11 +23,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
       emit(ProfileLoaded(profile));
     } catch (error) {
-      emit(
-        ProfileError(
-          message: "تعذر تحميل بيانات الملف الشخصي",
-        ),
-      );
+      emit(ProfileError(message: "تعذر تحميل بيانات الملف الشخصي"));
     }
   }
 
@@ -63,10 +55,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       );
     } catch (error) {
       emit(
-        ProfileError(
-          message: "تعذر حفظ التعديلات",
-          profile: currentProfile,
-        ),
+        ProfileError(message: "تعذر حفظ التعديلات", profile: currentProfile),
       );
     }
   }

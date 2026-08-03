@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:project_2/Core/di/injection_container.dart';
 import 'package:project_2/Features/auth/bloc/companies_bloc.dart';
 import 'package:project_2/Features/auth/bloc/companies_event.dart';
 import 'package:project_2/Features/auth/bloc/companies_state.dart';
 import 'package:project_2/Features/auth/data/models/company_model.dart';
-import 'package:project_2/Features/auth/data/repositories/fake_companies_repository.dart';
 import 'package:project_2/Features/auth/presentation/company_products_screen.dart';
-
-
 
 class ChooseCompanyPage extends StatelessWidget {
   const ChooseCompanyPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => CompaniesBloc(FakeCompaniesRepository())
+    return BlocProvider<CompaniesBloc>(
+      create: (_) => sl<CompaniesBloc>()
         ..add(CompaniesStarted()),
       child: const ChooseCompanyScreen(),
     );
@@ -64,9 +62,7 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
         child: BlocBuilder<CompaniesBloc, CompaniesState>(
           builder: (context, state) {
             if (state.status == CompaniesStatus.loading) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
 
             if (state.status == CompaniesStatus.failure) {
@@ -91,9 +87,9 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
                   child: TextField(
                     controller: searchController,
                     onChanged: (value) {
-                      context
-                          .read<CompaniesBloc>()
-                          .add(CompaniesSearchChanged(value));
+                      context.read<CompaniesBloc>().add(
+                        CompaniesSearchChanged(value),
+                      );
                     },
                     decoration: InputDecoration(
                       hintText: "ابحث عن اسم الشركة...",
@@ -109,9 +105,9 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
                           ? IconButton(
                               onPressed: () {
                                 searchController.clear();
-                                context
-                                    .read<CompaniesBloc>()
-                                    .add(CompaniesSearchChanged(""));
+                                context.read<CompaniesBloc>().add(
+                                  CompaniesSearchChanged(""),
+                                );
                                 setState(() {});
                               },
                               icon: const Icon(Icons.close, size: 20),
@@ -119,12 +115,10 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
                           : null,
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding:
-                          const EdgeInsets.symmetric(vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: Colors.grey.shade300),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -177,15 +171,14 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
                   child: visibleCompanies.isEmpty
                       ? _buildEmptyState()
                       : GridView.builder(
-                          padding:
-                              const EdgeInsets.fromLTRB(14, 4, 14, 20),
+                          padding: const EdgeInsets.fromLTRB(14, 4, 14, 20),
                           itemCount: visibleCompanies.length,
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 1,
-                            mainAxisSpacing: 12,
-                            mainAxisExtent: 175,
-                          ),
+                                crossAxisCount: 1,
+                                mainAxisSpacing: 12,
+                                mainAxisExtent: 175,
+                              ),
                           itemBuilder: (context, index) {
                             final company = visibleCompanies[index];
 
@@ -216,16 +209,12 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
         showCheckmark: false,
         label: Text(title),
         onSelected: (_) {
-          context.read<CompaniesBloc>().add(
-                CompaniesFilterChanged(filter),
-              );
+          context.read<CompaniesBloc>().add(CompaniesFilterChanged(filter));
         },
         backgroundColor: const Color(0xffE8F0FC),
         selectedColor: const Color(0xff0A2954),
         side: BorderSide.none,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         labelStyle: TextStyle(
           color: isSelected ? Colors.white : const Color(0xff53657E),
           fontSize: 12,
@@ -236,10 +225,7 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
     );
   }
 
-  Widget _buildCompanyCard(
-    BuildContext context,
-    CompanyModel company,
-  ) {
+  Widget _buildCompanyCard(BuildContext context, CompanyModel company) {
     final int offers = company.offers;
 
     return Container(
@@ -273,9 +259,7 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xffF5F7FC),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: const Color(0xffEDF0F5),
-                          ),
+                          border: Border.all(color: const Color(0xffEDF0F5)),
                         ),
                         child: Image.asset(
                           company.image,
@@ -343,9 +327,7 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          offers > 0
-                              ? Icons.access_time
-                              : Icons.info_outline,
+                          offers > 0 ? Icons.access_time : Icons.info_outline,
                           size: 14,
                           color: offers > 0
                               ? const Color(0xff26A76F)
@@ -353,9 +335,7 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          offers > 0
-                              ? "$offers عروض فعالة"
-                              : "لا توجد عروض",
+                          offers > 0 ? "$offers عروض فعالة" : "لا توجد عروض",
                           style: TextStyle(
                             color: offers > 0
                                 ? const Color(0xff26A76F)
@@ -400,10 +380,7 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
                 children: [
                   Text(
                     "عرض الأدوية",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(width: 8),
                   Icon(Icons.chevron_left, size: 21),
@@ -421,11 +398,7 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.business_outlined,
-            size: 65,
-            color: Colors.grey.shade400,
-          ),
+          Icon(Icons.business_outlined, size: 65, color: Colors.grey.shade400),
           const SizedBox(height: 12),
           const Text(
             "لا توجد شركات مطابقة",

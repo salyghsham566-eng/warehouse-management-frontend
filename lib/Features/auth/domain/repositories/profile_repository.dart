@@ -1,4 +1,3 @@
-
 import 'package:project_2/Features/auth/data/models/profile_model.dart';
 
 class ProfileRepository {
@@ -17,9 +16,7 @@ class ProfileRepository {
 
   Future<ProfileModel> getProfile() async {
     // بيانات مؤقتة إلى أن يصبح الباك جاهزًا.
-    await Future.delayed(
-      const Duration(milliseconds: 500),
-    );
+    await Future.delayed(const Duration(milliseconds: 500));
 
     return _profile;
   }
@@ -32,9 +29,7 @@ class ProfileRepository {
     required String birthDate,
     String? password,
   }) async {
-    await Future.delayed(
-      const Duration(milliseconds: 500),
-    );
+    await Future.delayed(const Duration(milliseconds: 500));
 
     _profile = _profile.copyWith(
       username: username,

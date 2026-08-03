@@ -13,15 +13,15 @@ class PharmaciesState {
   final List<PharmacyModel> visiblePharmacies;
   final String selectedArea;
   final String searchText;
-  final String? errorMessage;
+  final String errorMessage;
 
   const PharmaciesState({
     this.status = PharmaciesStatus.initial,
     this.pharmacies = const [],
     this.visiblePharmacies = const [],
-    this.selectedArea = "الكل",
-    this.searchText = "",
-    this.errorMessage,
+    this.selectedArea = 'الكل',
+    this.searchText = '',
+    this.errorMessage = '',
   });
 
   PharmaciesState copyWith({
@@ -35,7 +35,8 @@ class PharmaciesState {
     return PharmaciesState(
       status: status ?? this.status,
       pharmacies: pharmacies ?? this.pharmacies,
-      visiblePharmacies: visiblePharmacies ?? this.visiblePharmacies,
+      visiblePharmacies:
+          visiblePharmacies ?? this.visiblePharmacies,
       selectedArea: selectedArea ?? this.selectedArea,
       searchText: searchText ?? this.searchText,
       errorMessage: errorMessage ?? this.errorMessage,

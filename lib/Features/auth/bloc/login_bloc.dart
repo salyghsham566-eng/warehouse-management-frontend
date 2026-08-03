@@ -10,10 +10,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     on<LoginSubmitted>(_login);
   }
 
-  Future<void> _login(
-    LoginSubmitted event,
-    Emitter<LoginState> emit,
-  ) async {
+  Future<void> _login(LoginSubmitted event, Emitter<LoginState> emit) async {
     if (event.usernameOrPhone.isEmpty || event.password.isEmpty) {
       emit(LoginFailure('يرجى إدخال جميع البيانات'));
       return;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:project_2/Features/auth/presentation/choose_pharmacy_screen.dart';
-import 'package:project_2/order_review_screen.dart';
+import 'package:project_2/Features/auth/presentation/order_review_screen.dart';
 
 class OrderCartScreen extends StatefulWidget {
   final List<Map<String, dynamic>> items;
@@ -17,7 +17,7 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
 
   // الصيدلية المرتبطة بالطلبية مؤقتاً
   // لاحقاً ستأتي من صفحة اختيار الصيدلية
- Map<String, dynamic>? selectedPharmacy;
+  Map<String, dynamic>? selectedPharmacy;
 
   // أصناف الطلبية مؤقتاً
   // لاحقاً ستأتي من صفحة الأدوية
@@ -179,123 +179,105 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
     });
   }
 
-Future<void> _changePharmacy() async {
-  final Map<String, dynamic>? pharmacy =
-      await Navigator.push<Map<String, dynamic>>(
-    context,
-    MaterialPageRoute(
-      builder: (context) {
-        return const ChoosePharmacyScreen();
-      },
-    ),
-  );
+  Future<void> _changePharmacy() async {
+    final Map<String, dynamic>? pharmacy =
+        await Navigator.push<Map<String, dynamic>>(
+          context,
+          MaterialPageRoute(
+            builder: (context) {
+              return ChoosePharmacyPage();
+            },
+          ),
+        );
 
-  if (!mounted || pharmacy == null) {
-    return;
-  }
-
-  setState(() {
-    selectedPharmacy =
-        Map<String, dynamic>.from(pharmacy);
-  });
-
-  ScaffoldMessenger.of(context)
-      .hideCurrentSnackBar();
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        "تم ربط الطلبية مع ${pharmacy["name"]}",
-      ),
-    ),
-  );
-}
-
- Future<void> _previewOrder() async {
-  if (orderItems.isEmpty) {
-    _showMessage("لا توجد أصناف داخل الطلبية");
-    return;
-  }
-
-  if (selectedPharmacy == null) {
-    _showMessage("اختاري الصيدلية أولاً");
-    return;
-  }
-
-  final Map<String, dynamic>? result =
-      await Navigator.push<Map<String, dynamic>>(
-    context,
-    MaterialPageRoute(
-      builder: (context) => OrderReviewScreen(
-        pharmacy: Map<String, dynamic>.from(
-          selectedPharmacy!,
-        ),
-
-        // إرسال نسخة من أصناف السلة إلى المراجعة
-        cartItems: orderItems
-            .map(
-              (item) => Map<String, dynamic>.from(item),
-            )
-            .toList(),
-
-        // إرسال الملاحظة المكتوبة في السلة
-        initialNote: noteController.text,
-
-        // تنفذ فقط بعد نجاح إرسال الطلبية
-        onOrderSent: () {
-          if (!mounted) {
-            return;
-          }
-
-          setState(() {
-            orderItems.clear();
-            widget.cartItems?.clear();
-            noteController.clear();
-            selectedPharmacy = null;
-          });
-        },
-      ),
-    ),
-  );
-
-  // في حال تم إرسال الطلبية وانتقلنا إلى شاشة النجاح
-  // لن ترجع بيانات إلى السلة.
-  if (!mounted || result == null) {
-    return;
-  }
-
-  final dynamic returnedItems = result["items"];
-
-  setState(() {
-    // تحديث أصناف السلة بالكميات والحذف الذي حصل بالمراجعة
-    if (returnedItems is List) {
-      orderItems = returnedItems
-          .whereType<Map>()
-          .map(
-            (item) => Map<String, dynamic>.from(item),
-          )
-          .toList();
+    if (!mounted || pharmacy == null) {
+      return;
     }
 
-    // إعادة الملاحظة المعدلة من المراجعة إلى السلة
-    noteController.text =
-        result["note"]?.toString() ?? "";
+    setState(() {
+      selectedPharmacy = Map<String, dynamic>.from(pharmacy);
+    });
 
-    // مزامنة التعديلات مع السلة الأصلية في صفحات الأدوية
-    if (widget.cartItems != null) {
-      widget.cartItems!.clear();
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
-      for (
-        int index = 0;
-        index < orderItems.length;
-        index++
-      ) {
-        _syncCartItem(index);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("تم ربط الطلبية مع ${pharmacy["name"]}")),
+    );
+  }
+
+  Future<void> _previewOrder() async {
+    if (orderItems.isEmpty) {
+      _showMessage("لا توجد أصناف داخل الطلبية");
+      return;
+    }
+
+    if (selectedPharmacy == null) {
+      _showMessage("اختاري الصيدلية أولاً");
+      return;
+    }
+
+    final Map<String, dynamic>? result =
+        await Navigator.push<Map<String, dynamic>>(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OrderReviewScreen(
+              pharmacy: Map<String, dynamic>.from(selectedPharmacy!),
+
+              // إرسال نسخة من أصناف السلة إلى المراجعة
+              cartItems: orderItems
+                  .map((item) => Map<String, dynamic>.from(item))
+                  .toList(),
+
+              // إرسال الملاحظة المكتوبة في السلة
+              initialNote: noteController.text,
+
+              // تنفذ فقط بعد نجاح إرسال الطلبية
+              onOrderSent: () {
+                if (!mounted) {
+                  return;
+                }
+
+                setState(() {
+                  orderItems.clear();
+                  widget.cartItems?.clear();
+                  noteController.clear();
+                  selectedPharmacy = null;
+                });
+              },
+            ),
+          ),
+        );
+
+    // في حال تم إرسال الطلبية وانتقلنا إلى شاشة النجاح
+    // لن ترجع بيانات إلى السلة.
+    if (!mounted || result == null) {
+      return;
+    }
+
+    final dynamic returnedItems = result["items"];
+
+    setState(() {
+      // تحديث أصناف السلة بالكميات والحذف الذي حصل بالمراجعة
+      if (returnedItems is List) {
+        orderItems = returnedItems
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList();
       }
-    }
-  });
-}
 
+      // إعادة الملاحظة المعدلة من المراجعة إلى السلة
+      noteController.text = result["note"]?.toString() ?? "";
+
+      // مزامنة التعديلات مع السلة الأصلية في صفحات الأدوية
+      if (widget.cartItems != null) {
+        widget.cartItems!.clear();
+
+        for (int index = 0; index < orderItems.length; index++) {
+          _syncCartItem(index);
+        }
+      }
+    });
+  }
 
   void _sendOrder() {
     if (orderItems.isEmpty) {
@@ -335,7 +317,6 @@ Future<void> _changePharmacy() async {
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
   }
-  
 
   @override
   void dispose() {
@@ -389,8 +370,6 @@ Future<void> _changePharmacy() async {
             },
             icon: const Icon(Icons.arrow_back, color: Color(0xff0A2954)),
           ),
-
-       
         ),
 
         body: orderItems.isEmpty
@@ -1036,8 +1015,6 @@ Future<void> _changePharmacy() async {
             ),
 
             const SizedBox(width: 7),
-
-       
           ],
         ),
       ),

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:project_2/orders_store.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:project_2/Core/di/injection_container.dart';
+import 'package:project_2/Features/auth/bloc/order_details_bloc.dart';
+import 'package:project_2/Features/auth/bloc/order_details_event.dart';
+import 'package:project_2/Features/auth/bloc/order_details_state.dart';
 
 class OrderDetailsScreen extends StatelessWidget {
   final String orderNumber;
@@ -248,41 +252,136 @@ class OrderDetailsScreen extends StatelessWidget {
     return result;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<List<Map<String, dynamic>>>(
-      valueListenable: OrdersStore.instance.ordersNotifier,
-      builder: (context, orders, child) {
-        final order = _findOrder(orders);
+ @override
+Widget build(BuildContext context) {
+  return BlocProvider<OrderDetailsBloc>(
+    create: (_) => sl<OrderDetailsBloc>()
+      ..add(
+        OrderDetailsRequested(
+          orderNumber: orderNumber,
+        ),
+      ),
+    child: BlocBuilder<
+        OrderDetailsBloc,
+        OrderDetailsState>(
+      builder: (context, state) {
+        if (state is OrderDetailsInitial ||
+            state is OrderDetailsLoading) {
+          return const Directionality(
+            textDirection: TextDirection.rtl,
+            child: Scaffold(
+              backgroundColor: Color(0xffF5F7FC),
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          );
+            }
+
+        if (state is OrderDetailsFailure) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: Scaffold(
+              backgroundColor:
+                  const Color(0xffF5F7FC),
+              appBar: _buildAppBar(),
+              body: _buildErrorState(
+                context,
+                state.message,
+              ),
+            ),
+          );
+        }
+
+        final loadedState =
+            state as OrderDetailsLoaded;
+
+        final order = loadedState.order.toMap();
 
         return Directionality(
           textDirection: TextDirection.rtl,
           child: Scaffold(
-            backgroundColor: const Color(0xffF5F7FC),
-            appBar: AppBar(
-              title: const Text(
-                "تفاصيل الطلبية",
-                style: TextStyle(
-                  color: Color(0xff0A2954),
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              centerTitle: true,
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xff0A2954),
-              surfaceTintColor: Colors.white,
-              elevation: 0,
+            backgroundColor:
+                const Color(0xffF5F7FC),
+            appBar: _buildAppBar(),
+            body: RefreshIndicator(
+              onRefresh: () async {
+                context
+                    .read<OrderDetailsBloc>()
+                    .add(
+                      OrderDetailsRefreshed(
+                        orderNumber: orderNumber,
+                      ),
+                    );
+              },
+              child: _buildDetails(order),
             ),
-            body: order == null
-                ? _buildNotFound(context)
-                : _buildDetails(order),
           ),
         );
       },
-    );
-  }
-
+    ),
+  );
+}
+PreferredSizeWidget _buildAppBar() {
+  return AppBar(
+    title: const Text(
+      'تفاصيل الطلبية',
+      style: TextStyle(
+        color: Color(0xff0A2954),
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    centerTitle: true,
+    backgroundColor: Colors.white,
+    foregroundColor: const Color(0xff0A2954),
+    surfaceTintColor: Colors.white,
+    elevation: 0,
+  );
+}
+Widget _buildErrorState(
+  BuildContext context,
+  String message,
+) {
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.receipt_long_outlined,
+            size: 75,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 14),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xff0A2954),
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 18),
+          ElevatedButton(
+            onPressed: () {
+              context
+                  .read<OrderDetailsBloc>()
+                  .add(
+                    OrderDetailsRequested(
+                      orderNumber: orderNumber,
+                    ),
+                  );
+            },
+            child: const Text('إعادة المحاولة'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
   Widget _buildNotFound(BuildContext context) {
     return Center(
       child: Padding(

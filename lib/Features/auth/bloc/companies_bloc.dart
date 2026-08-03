@@ -2,14 +2,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_2/Features/auth/bloc/companies_event.dart';
 import 'package:project_2/Features/auth/bloc/companies_state.dart';
 import 'package:project_2/Features/auth/data/models/company_model.dart';
-import 'package:project_2/Features/auth/data/repositories/fake_companies_repository.dart';
-
-
+import 'package:project_2/Features/auth/domain/repositories/companies_repository.dart';
 
 class CompaniesBloc extends Bloc<CompaniesEvent, CompaniesState> {
-  final FakeCompaniesRepository repository;
+  final CompaniesRepository repository;
 
-  CompaniesBloc(this.repository) : super(const CompaniesState()) {
+  CompaniesBloc({
+    required this.repository,
+  }) : super(const CompaniesState()) {
     on<CompaniesStarted>(_onStarted);
     on<CompaniesSearchChanged>(_onSearchChanged);
     on<CompaniesFilterChanged>(_onFilterChanged);
@@ -19,27 +19,35 @@ class CompaniesBloc extends Bloc<CompaniesEvent, CompaniesState> {
     CompaniesStarted event,
     Emitter<CompaniesState> emit,
   ) async {
-    emit(state.copyWith(status: CompaniesStatus.loading));
+    emit(
+      state.copyWith(
+        status: CompaniesStatus.loading,
+        errorMessage: '',
+      ),
+    );
 
     try {
       final companies = await repository.getCompanies();
+
+      final visibleCompanies = _applyFilters(
+        companies: companies,
+        searchText: state.searchText,
+        selectedFilter: state.selectedFilter,
+      );
 
       emit(
         state.copyWith(
           status: CompaniesStatus.success,
           companies: companies,
-          visibleCompanies: _applyFilters(
-            companies: companies,
-            searchText: state.searchText,
-            selectedFilter: state.selectedFilter,
-          ),
+          visibleCompanies: visibleCompanies,
+          errorMessage: '',
         ),
       );
-    } catch (e) {
+    } catch (error) {
       emit(
         state.copyWith(
           status: CompaniesStatus.failure,
-          errorMessage: "حدث خطأ أثناء تحميل الشركات",
+          errorMessage: 'حدث خطأ أثناء تحميل الشركات',
         ),
       );
     }
@@ -49,14 +57,16 @@ class CompaniesBloc extends Bloc<CompaniesEvent, CompaniesState> {
     CompaniesSearchChanged event,
     Emitter<CompaniesState> emit,
   ) {
+    final visibleCompanies = _applyFilters(
+      companies: state.companies,
+      searchText: event.searchText,
+      selectedFilter: state.selectedFilter,
+    );
+
     emit(
       state.copyWith(
         searchText: event.searchText,
-        visibleCompanies: _applyFilters(
-          companies: state.companies,
-          searchText: event.searchText,
-          selectedFilter: state.selectedFilter,
-        ),
+        visibleCompanies: visibleCompanies,
       ),
     );
   }
@@ -65,14 +75,16 @@ class CompaniesBloc extends Bloc<CompaniesEvent, CompaniesState> {
     CompaniesFilterChanged event,
     Emitter<CompaniesState> emit,
   ) {
+    final visibleCompanies = _applyFilters(
+      companies: state.companies,
+      searchText: state.searchText,
+      selectedFilter: event.filter,
+    );
+
     emit(
       state.copyWith(
         selectedFilter: event.filter,
-        visibleCompanies: _applyFilters(
-          companies: state.companies,
-          searchText: state.searchText,
-          selectedFilter: event.filter,
-        ),
+        visibleCompanies: visibleCompanies,
       ),
     );
   }
@@ -82,24 +94,34 @@ class CompaniesBloc extends Bloc<CompaniesEvent, CompaniesState> {
     required String searchText,
     required CompanyFilter selectedFilter,
   }) {
-    final text = searchText.trim().toLowerCase();
+    final normalizedSearchText = searchText.trim().toLowerCase();
 
     List<CompanyModel> result = companies.where((company) {
-      return company.name.toLowerCase().contains(text);
+      return company.name
+          .trim()
+          .toLowerCase()
+          .contains(normalizedSearchText);
     }).toList();
 
     switch (selectedFilter) {
       case CompanyFilter.hasOffers:
-        result = result.where((company) => company.offers > 0).toList();
+        result = result
+            .where((company) => company.offers > 0)
+            .toList();
         break;
 
       case CompanyFilter.noOffers:
-        result = result.where((company) => company.offers == 0).toList();
+        result = result
+            .where((company) => company.offers == 0)
+            .toList();
         break;
 
       case CompanyFilter.mostProducts:
         result.sort(
-          (a, b) => b.productsCount.compareTo(a.productsCount),
+          (firstCompany, secondCompany) =>
+              secondCompany.productsCount.compareTo(
+            firstCompany.productsCount,
+          ),
         );
         break;
 

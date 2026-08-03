@@ -3,7 +3,6 @@ import 'package:project_2/Core/api_client.dart';
 import 'package:project_2/Features/auth/data/login_response.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class AuthRepository {
   final ApiClient apiClient;
 
@@ -16,10 +15,7 @@ class AuthRepository {
     try {
       final response = await apiClient.dio.post(
         '/representative/login',
-        data: {
-          'username_or_phone': usernameOrPhone,
-          'password': password,
-        },
+        data: {'username_or_phone': usernameOrPhone, 'password': password},
       );
 
       final loginResponse = LoginResponse.fromJson(response.data);

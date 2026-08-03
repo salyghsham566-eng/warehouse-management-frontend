@@ -1,27 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:project_2/order_details_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:project_2/Core/di/injection_container.dart';
+import 'package:project_2/Features/auth/bloc/orders_tracking_bloc.dart';
+import 'package:project_2/Features/auth/bloc/orders_tracking_event.dart';
+import 'package:project_2/Features/auth/presentation/order_details_screen.dart';
 import 'package:project_2/orders_store.dart';
 
 class OrdersTrackingScreen extends StatefulWidget {
-
-
-  const OrdersTrackingScreen({
-    super.key,
-  
-  });
+  const OrdersTrackingScreen({super.key});
 
   @override
-  State<OrdersTrackingScreen> createState() =>
-      _OrdersTrackingScreenState();
+  State<OrdersTrackingScreen> createState() => _OrdersTrackingScreenState();
 }
 
-class _OrdersTrackingScreenState
-    extends State<OrdersTrackingScreen> {
+class _OrdersTrackingScreenState extends State<OrdersTrackingScreen> {
   String selectedStatus = "all";
 
   DateTimeRange? selectedDateRange;
+late final OrdersTrackingBloc _ordersBloc;
+@override
+void initState() {
+  super.initState();
 
-  late List<Map<String, dynamic>> orders;
+  _ordersBloc = sl<OrdersTrackingBloc>()
+    ..add(const OrdersTrackingStarted());
+}
+@override
+void dispose() {
+  _ordersBloc.close();
+  super.dispose();
+}
 
   final Map<String, String> statusLabels = const {
     "all": "الكل",
@@ -32,21 +40,12 @@ class _OrdersTrackingScreenState
     "archived": "مؤرشفة",
   };
 
-
-
-  
-
- 
-
   double _toDouble(dynamic value) {
     if (value is num) {
       return value.toDouble();
     }
 
-    return double.tryParse(
-          value?.toString() ?? "",
-        ) ??
-        0;
+    return double.tryParse(value?.toString() ?? "") ?? 0;
   }
 
   int _toInt(dynamic value) {
@@ -54,24 +53,17 @@ class _OrdersTrackingScreenState
       return value.toInt();
     }
 
-    return int.tryParse(
-          value?.toString() ?? "",
-        ) ??
-        0;
+    return int.tryParse(value?.toString() ?? "") ?? 0;
   }
 
   DateTime _orderDate(Map<String, dynamic> order) {
-    final dynamic value =
-        order["createdAt"] ?? order["created_at"];
+    final dynamic value = order["createdAt"] ?? order["created_at"];
 
     if (value is DateTime) {
       return value;
     }
 
-    return DateTime.tryParse(
-          value?.toString() ?? "",
-        ) ??
-        DateTime.now();
+    return DateTime.tryParse(value?.toString() ?? "") ?? DateTime.now();
   }
 
   String _orderNumber(Map<String, dynamic> order) {
@@ -89,8 +81,7 @@ class _OrdersTrackingScreenState
   }
 
   int _itemsCount(Map<String, dynamic> order) {
-    final dynamic count =
-        order["itemsCount"] ?? order["items_count"];
+    final dynamic count = order["itemsCount"] ?? order["items_count"];
 
     if (count != null) {
       return _toInt(count);
@@ -105,60 +96,53 @@ class _OrdersTrackingScreenState
     return 0;
   }
 
+  List<Map<String, dynamic>> _filteredOrders(
+    List<Map<String, dynamic>> orders,
+  ) {
+    final List<Map<String, dynamic>> result = orders.where((order) {
+      final String status = order["status"]?.toString() ?? "";
 
-List<Map<String, dynamic>> _filteredOrders(
-  List<Map<String, dynamic>> orders,
-) {
-  final List<Map<String, dynamic>> result =
-      orders.where((order) {
-    final String status =
-        order["status"]?.toString() ?? "";
-
-    if (selectedStatus != "all" &&
-        status != selectedStatus) {
-      return false;
-    }
-
-    if (selectedDateRange != null) {
-      final DateTime date = _orderDate(order);
-
-      final DateTime start = DateTime(
-        selectedDateRange!.start.year,
-        selectedDateRange!.start.month,
-        selectedDateRange!.start.day,
-      );
-
-      final DateTime end = DateTime(
-        selectedDateRange!.end.year,
-        selectedDateRange!.end.month,
-        selectedDateRange!.end.day,
-        23,
-        59,
-        59,
-      );
-
-      if (date.isBefore(start) ||
-          date.isAfter(end)) {
+      if (selectedStatus != "all" && status != selectedStatus) {
         return false;
       }
-    }
 
-    return true;
-  }).toList();
+      if (selectedDateRange != null) {
+        final DateTime date = _orderDate(order);
 
-  result.sort(
-    (first, second) => _orderDate(second)
-        .compareTo(_orderDate(first)),
-  );
+        final DateTime start = DateTime(
+          selectedDateRange!.start.year,
+          selectedDateRange!.start.month,
+          selectedDateRange!.start.day,
+        );
 
-  return result;
-}
+        final DateTime end = DateTime(
+          selectedDateRange!.end.year,
+          selectedDateRange!.end.month,
+          selectedDateRange!.end.day,
+          23,
+          59,
+          59,
+        );
+
+        if (date.isBefore(start) || date.isAfter(end)) {
+          return false;
+        }
+      }
+
+      return true;
+    }).toList();
+
+    result.sort(
+      (first, second) => _orderDate(second).compareTo(_orderDate(first)),
+    );
+
+    return result;
+  }
 
   Future<void> _selectDateRange() async {
     final DateTime now = DateTime.now();
 
-    final DateTimeRange? result =
-        await showDateRangePicker(
+    final DateTimeRange? result = await showDateRangePicker(
       context: context,
       firstDate: DateTime(now.year - 3),
       lastDate: DateTime(now.year + 1),
@@ -179,11 +163,9 @@ List<Map<String, dynamic>> _filteredOrders(
   }
 
   String _formatDate(DateTime date) {
-    final String day =
-        date.day.toString().padLeft(2, "0");
+    final String day = date.day.toString().padLeft(2, "0");
 
-    final String month =
-        date.month.toString().padLeft(2, "0");
+    final String month = date.month.toString().padLeft(2, "0");
 
     return "$day/$month/${date.year}";
   }
@@ -232,149 +214,107 @@ List<Map<String, dynamic>> _filteredOrders(
     return statusLabels[status] ?? status;
   }
 
-  void _openOrderDetails(
-  Map<String, dynamic> order,
-) {
-  final String number =
-      _orderNumber(order);
+  void _openOrderDetails(Map<String, dynamic> order) {
+    final String number = _orderNumber(order);
 
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => OrderDetailsScreen(
-        orderNumber: number,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OrderDetailsScreen(orderNumber: number),
       ),
-    ),
-  );
-}
+    );
+  }
 
- @override
-Widget build(BuildContext context) {
-  return Directionality(
-    textDirection: TextDirection.rtl,
-    child: Scaffold(
-      backgroundColor: const Color(0xffF5F7FC),
-      appBar: AppBar(
-        title: const Text(
-          "متابعة الطلبات",
-          style: TextStyle(
-            color: Color(0xff0A2954),
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider<OrdersTrackingBloc>.value (
+      value: _ordersBloc,
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: const Color(0xffF5F7FC),
+          appBar: AppBar(
+            title: const Text(
+              "متابعة الطلبات",
+              style: TextStyle(
+                color: Color(0xff0A2954),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            centerTitle: true,
+            backgroundColor: Colors.white,
+            foregroundColor: const Color(0xff0A2954),
+            surfaceTintColor: Colors.white,
+            elevation: 0,
+          ),
+          body: ValueListenableBuilder<List<Map<String, dynamic>>>(
+            valueListenable: OrdersStore.instance.ordersNotifier,
+            builder: (context, orders, child) {
+              final visibleOrders = _filteredOrders(orders);
+      
+              return Column(
+                children: [
+                  _buildFilters(),
+                  _buildDateFilter(),
+                  _buildResultHeader(visibleOrders.length),
+                  Expanded(
+                    child: visibleOrders.isEmpty
+                        ? _buildEmptyState()
+                        : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),
+                            itemCount: visibleOrders.length,
+                            itemBuilder: (context, index) {
+                              return _buildOrderCard(visibleOrders[index]);
+                            },
+                          ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor:
-            const Color(0xff0A2954),
-        surfaceTintColor: Colors.white,
-        elevation: 0,
       ),
-      body: ValueListenableBuilder<
-          List<Map<String, dynamic>>>(
-        valueListenable:
-            OrdersStore.instance.ordersNotifier,
-        builder: (
-          context,
-          orders,
-          child,
-        ) {
-          final visibleOrders =
-              _filteredOrders(orders);
-
-          return Column(
-            children: [
-              _buildFilters(),
-              _buildDateFilter(),
-              _buildResultHeader(
-                visibleOrders.length,
-              ),
-              Expanded(
-                child: visibleOrders.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        padding:
-                            const EdgeInsets.fromLTRB(
-                          12,
-                          4,
-                          12,
-                          20,
-                        ),
-                        itemCount:
-                            visibleOrders.length,
-                        itemBuilder: (
-                          context,
-                          index,
-                        ) {
-                          return _buildOrderCard(
-                            visibleOrders[index],
-                          );
-                        },
-                      ),
-              ),
-            ],
-          );
-        },
-      ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildFilters() {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.only(
-        top: 10,
-        bottom: 10,
-      ),
+      padding: const EdgeInsets.only(top: 10, bottom: 10),
       child: SizedBox(
         height: 38,
         child: ListView.separated(
-          padding:
-              const EdgeInsets.symmetric(
-            horizontal: 12,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           scrollDirection: Axis.horizontal,
           itemCount: statusLabels.length,
-          separatorBuilder: (
-            context,
-            index,
-          ) {
+          separatorBuilder: (context, index) {
             return const SizedBox(width: 7);
           },
           itemBuilder: (context, index) {
-            final String status =
-                statusLabels.keys.elementAt(index);
+            final String status = statusLabels.keys.elementAt(index);
 
-            final bool selected =
-                selectedStatus == status;
+            final bool selected = selectedStatus == status;
 
             return ChoiceChip(
               selected: selected,
-              label: Text(
-                statusLabels[status]!,
-              ),
+              label: Text(statusLabels[status]!),
               onSelected: (_) {
                 setState(() {
                   selectedStatus = status;
                 });
               },
-              selectedColor:
-                  const Color(0xff0A2954),
-              backgroundColor:
-                  const Color(0xffEEF3FF),
+              selectedColor: const Color(0xff0A2954),
+              backgroundColor: const Color(0xffEEF3FF),
               labelStyle: TextStyle(
-                color: selected
-                    ? Colors.white
-                    : const Color(0xff53657E),
+                color: selected ? Colors.white : const Color(0xff53657E),
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
               showCheckmark: false,
               side: BorderSide.none,
               shape: RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(20),
               ),
             );
           },
@@ -397,26 +337,16 @@ Widget build(BuildContext context) {
 
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(
-        12,
-        0,
-        12,
-        12,
-      ),
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       child: InkWell(
         onTap: _selectDateRange,
         borderRadius: BorderRadius.circular(11),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 11,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           decoration: BoxDecoration(
             color: const Color(0xffF6F8FC),
             borderRadius: BorderRadius.circular(11),
-            border: Border.all(
-              color: const Color(0xffE2E7EF),
-            ),
+            border: Border.all(color: const Color(0xffE2E7EF)),
           ),
           child: Row(
             children: [
@@ -444,8 +374,7 @@ Widget build(BuildContext context) {
                     });
                   },
                   padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints(
+                  constraints: const BoxConstraints(
                     minWidth: 30,
                     minHeight: 30,
                   ),
@@ -456,10 +385,7 @@ Widget build(BuildContext context) {
                   ),
                 )
               else
-                const Icon(
-                  Icons.keyboard_arrow_down,
-                  color: Color(0xff7D8796),
-                ),
+                const Icon(Icons.keyboard_arrow_down, color: Color(0xff7D8796)),
             ],
           ),
         ),
@@ -469,12 +395,7 @@ Widget build(BuildContext context) {
 
   Widget _buildResultHeader(int count) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        14,
-        14,
-        14,
-        8,
-      ),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
       child: Row(
         children: [
           const Text(
@@ -488,37 +409,26 @@ Widget build(BuildContext context) {
           const Spacer(),
           Text(
             "$count طلبية",
-            style: const TextStyle(
-              color: Color(0xff60758F),
-              fontSize: 11,
-            ),
+            style: const TextStyle(color: Color(0xff60758F), fontSize: 11),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildOrderCard(
-    Map<String, dynamic> order,
-  ) {
-    final String status =
-        order["status"]?.toString() ??
-            "pending_review";
+  Widget _buildOrderCard(Map<String, dynamic> order) {
+    final String status = order["status"]?.toString() ?? "pending_review";
 
-    final DateTime createdAt =
-        _orderDate(order);
+    final DateTime createdAt = _orderDate(order);
 
-    final double total =
-        _toDouble(order["total"]);
+    final double total = _toDouble(order["total"]);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 11),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xffE2E7EF),
-        ),
+        border: Border.all(color: const Color(0xffE2E7EF)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.025),
@@ -537,33 +447,27 @@ Widget build(BuildContext context) {
           child: Column(
             children: [
               Row(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           "طلب #${_orderNumber(order)}",
                           style: const TextStyle(
-                            color:
-                                Color(0xff0A2954),
+                            color: Color(0xff0A2954),
                             fontSize: 14,
-                            fontWeight:
-                                FontWeight.bold,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           _pharmacyName(order),
                           style: const TextStyle(
-                            color:
-                                Color(0xff53657E),
+                            color: Color(0xff53657E),
                             fontSize: 12,
-                            fontWeight:
-                                FontWeight.w600,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -572,37 +476,28 @@ Widget build(BuildContext context) {
                   _buildStatusChip(status),
                 ],
               ),
-              const Divider(
-                height: 24,
-                color: Color(0xffE8ECF2),
-              ),
+              const Divider(height: 24, color: Color(0xffE8ECF2)),
               Row(
                 children: [
                   Expanded(
                     child: _buildOrderValue(
-                      icon:
-                          Icons.calendar_today_outlined,
+                      icon: Icons.calendar_today_outlined,
                       title: "التاريخ",
-                      value:
-                          _formatDate(createdAt),
+                      value: _formatDate(createdAt),
                     ),
                   ),
                   Expanded(
                     child: _buildOrderValue(
-                      icon:
-                          Icons.medication_outlined,
+                      icon: Icons.medication_outlined,
                       title: "عدد الأصناف",
-                      value:
-                          "${_itemsCount(order)} أصناف",
+                      value: "${_itemsCount(order)} أصناف",
                     ),
                   ),
                   Expanded(
                     child: _buildOrderValue(
-                      icon:
-                          Icons.payments_outlined,
+                      icon: Icons.payments_outlined,
                       title: "القيمة",
-                      value:
-                          "${total.toStringAsFixed(2)} ر.س",
+                      value: "${total.toStringAsFixed(2)} ر.س",
                     ),
                   ),
                 ],
@@ -616,10 +511,7 @@ Widget build(BuildContext context) {
 
   Widget _buildStatusChip(String status) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 9,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(
         color: _statusBackground(status),
         borderRadius: BorderRadius.circular(20),
@@ -642,18 +534,11 @@ Widget build(BuildContext context) {
   }) {
     return Column(
       children: [
-        Icon(
-          icon,
-          color: const Color(0xff60758F),
-          size: 18,
-        ),
+        Icon(icon, color: const Color(0xff60758F), size: 18),
         const SizedBox(height: 5),
         Text(
           title,
-          style: const TextStyle(
-            color: Color(0xff8B96A8),
-            fontSize: 9,
-          ),
+          style: const TextStyle(color: Color(0xff8B96A8), fontSize: 9),
         ),
         const SizedBox(height: 3),
         Text(
@@ -694,10 +579,7 @@ Widget build(BuildContext context) {
             const Text(
               "جرّبي تغيير الحالة أو الفترة المحددة",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xff7D8796),
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Color(0xff7D8796), fontSize: 12),
             ),
           ],
         ),

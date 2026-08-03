@@ -43,6 +43,11 @@
 					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
 					<key>UISceneStoryboardFile</key>
 					<string>Main</string>
+					<key>NSPhotoLibraryUsageDescription</key>
+<string>نحتاج الوصول إلى الصور لإرفاق صورة وصل الدفعة</string>
+
+<key>NSCameraUsageDescription</key>
+<string>نحتاج استخدام الكاميرا لتصوير وصل الدفعة</string>
 				</dict>
 			</array>
 		</dict>

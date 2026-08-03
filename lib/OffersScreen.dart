@@ -48,65 +48,61 @@ class _OffersScreenState extends State<OffersScreen>
         ),
 
         body: TabBarView(
-
           controller: tabController,
           children: [
-
             /// OFFERS TAB
             SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-
                   /// Main Offer Card
-                 Row(
-  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade100,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          "نشط الآن",
+                          style: TextStyle(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
 
-    Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.green.shade100,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: const Text(
-        "نشط الآن",
-        style: TextStyle(
-          color: Colors.green,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    ),
+                      const Text(
+                        "أبرز العروض الأسبوعية",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xff002D62),
+                        ),
+                      ),
+                    ],
+                  ),
 
-    const Text(
-      "أبرز العروض الأسبوعية",
-      style: TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: Color(0xff002D62),
-      ),
-    ),
-  ],
-),
-
-                        const SizedBox(height: 20),
-GridView.builder(
-  shrinkWrap: true,
-  physics: const NeverScrollableScrollPhysics(),
-  itemCount: 6,
-  gridDelegate:
-      const SliverGridDelegateWithFixedCrossAxisCount(
-    crossAxisCount: 1,
-    childAspectRatio: 1.3,
-    mainAxisSpacing: 15,
-  ),
-  itemBuilder: (context, index) {
-    return OfferCard();
-  },
-),
+                  const SizedBox(height: 20),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: 6,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 1,
+                          childAspectRatio: 1.3,
+                          mainAxisSpacing: 15,
+                        ),
+                    itemBuilder: (context, index) {
+                      return OfferCard();
+                    },
+                  ),
 
                   const SizedBox(height: 25),
 
@@ -120,21 +116,12 @@ GridView.builder(
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: const [
-//ربط
-                        ProductCard(
-                          name: "Panadol Extra",
-                          discount: "5%",
-                        ),
+                        //ربط
+                        ProductCard(name: "Panadol Extra", discount: "5%"),
 
-                        ProductCard(
-                          name: "Vitamin C",
-                          discount: "10%",
-                        ),
+                        ProductCard(name: "Vitamin C", discount: "10%"),
 
-                        ProductCard(
-                          name: "Omega 3",
-                          discount: "12%",
-                        ),
+                        ProductCard(name: "Omega 3", discount: "12%"),
                       ],
                     ),
                   ),
@@ -145,14 +132,10 @@ GridView.builder(
                   sectionTitle("السلات المقترحة للبيع من المشرف"),
 
                   const SizedBox(height: 10),
-//ربط
+                  //ربط
                   const BundleCard(
                     title: "سلة عناية الأطفال",
-                    products: [
-                      "شراب خافض حرارة",
-                      "فيتامين أطفال",
-                      "حفاضات",
-                    ],
+                    products: ["شراب خافض حرارة", "فيتامين أطفال", "حفاضات"],
                     discount: "15%",
                   ),
 
@@ -160,11 +143,7 @@ GridView.builder(
 
                   const BundleCard(
                     title: "سلة الإسعافات الأولية",
-                    products: [
-                      "شاش",
-                      "مطهر",
-                      "لاصق طبي",
-                    ],
+                    products: ["شاش", "مطهر", "لاصق طبي"],
                     discount: "25%",
                   ),
                 ],
@@ -175,21 +154,12 @@ GridView.builder(
             ListView(
               padding: const EdgeInsets.all(16),
               children: const [
-//ربط
-                DiscountTile(
-                  title: "أدوية السكري",
-                  discount: "8%",
-                ),
+                //ربط
+                DiscountTile(title: "أدوية السكري", discount: "8%"),
 
-                DiscountTile(
-                  title: "الدفع النقدي المبكر",
-                  discount: "3%",
-                ),
+                DiscountTile(title: "الدفع النقدي المبكر", discount: "3%"),
 
-                DiscountTile(
-                  title: "ولاء العملاء الذهبي",
-                  discount: "5%",
-                ),
+                DiscountTile(title: "ولاء العملاء الذهبي", discount: "5%"),
               ],
             ),
           ],
@@ -210,12 +180,7 @@ GridView.builder(
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.grey,
-            ),
-          ),
+          Text(title, style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );
@@ -240,11 +205,7 @@ class ProductCard extends StatelessWidget {
   final String name;
   final String discount;
 
-  const ProductCard({
-    super.key,
-    required this.name,
-    required this.discount,
-  });
+  const ProductCard({super.key, required this.name, required this.discount});
 
   @override
   Widget build(BuildContext context) {
@@ -259,20 +220,11 @@ class ProductCard extends StatelessWidget {
       child: Column(
         children: [
           const Expanded(
-            child: Icon(
-              Icons.medication,
-              size: 60,
-              color: Color(0xff002D62),
-            ),
+            child: Icon(Icons.medication, size: 60, color: Color(0xff002D62)),
           ),
           Text(name),
           const SizedBox(height: 5),
-          Text(
-            "خصم $discount",
-            style: const TextStyle(
-              color: Colors.green,
-            ),
-          ),
+          Text("خصم $discount", style: const TextStyle(color: Colors.green)),
         ],
       ),
     );
@@ -304,10 +256,7 @@ class BundleCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 10),
           ...products.map((e) => Text("• $e")),
@@ -337,11 +286,7 @@ class DiscountTile extends StatelessWidget {
   final String title;
   final String discount;
 
-  const DiscountTile({
-    super.key,
-    required this.title,
-    required this.discount,
-  });
+  const DiscountTile({super.key, required this.title, required this.discount});
 
   @override
   Widget build(BuildContext context) {
@@ -360,6 +305,7 @@ class DiscountTile extends StatelessWidget {
     );
   }
 }
+
 class OfferCard extends StatelessWidget {
   const OfferCard({super.key});
 
@@ -370,9 +316,7 @@ class OfferCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.green.shade200,
-        ),
+        border: Border.all(color: Colors.green.shade200),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(.05),
@@ -384,15 +328,11 @@ class OfferCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-
           Row(
             children: [
-
               Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   Text(
                     "20%",
                     style: TextStyle(
@@ -409,8 +349,7 @@ class OfferCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: Colors.blue.shade50,
-                      borderRadius:
-                          BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text("5 + 1"),
                   ),
@@ -420,8 +359,7 @@ class OfferCard extends StatelessWidget {
               const Spacer(),
 
               const Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
                     "عرض المضادات الحيوية الصيفي",
@@ -436,9 +374,7 @@ class OfferCard extends StatelessWidget {
 
                   Text(
                     "Amoxicillin - Azithromycin",
-                    style: TextStyle(
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(color: Colors.grey),
                   ),
                 ],
               ),
@@ -449,22 +385,11 @@ class OfferCard extends StatelessWidget {
 
           Row(
             children: [
-
-              Expanded(
-                child: infoBox(
-                  "15/10/2025",
-                  "الانتهاء",
-                ),
-              ),
+              Expanded(child: infoBox("15/10/2025", "الانتهاء")),
 
               const SizedBox(width: 10),
 
-              Expanded(
-                child: infoBox(
-                  "50",
-                  "الكمية",
-                ),
-              ),
+              Expanded(child: infoBox("50", "الكمية")),
             ],
           ),
 
@@ -489,19 +414,15 @@ class OfferCard extends StatelessWidget {
             height: 48,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    const Color(0xff002D62),
+                backgroundColor: const Color(0xff002D62),
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               onPressed: () {},
               child: const Text(
                 "إضافة العرض الى الطلب",
-                style: TextStyle(
-                  color: Colors.white,
-                ),
+                style: TextStyle(color: Colors.white),
               ),
             ),
           ),
@@ -510,10 +431,7 @@ class OfferCard extends StatelessWidget {
     );
   }
 
-  Widget infoBox(
-    String value,
-    String title,
-  ) {
+  Widget infoBox(String value, String title) {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -522,18 +440,8 @@ class OfferCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.grey,
-            ),
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(title, style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );

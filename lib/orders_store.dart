@@ -8,37 +8,32 @@ class OrdersStore {
   final ValueNotifier<List<Map<String, dynamic>>> ordersNotifier =
       ValueNotifier<List<Map<String, dynamic>>>([]);
 
-  List<Map<String, dynamic>> get orders =>
-      ordersNotifier.value;
+  List<Map<String, dynamic>> get orders => ordersNotifier.value;
 
   void addOrder(Map<String, dynamic> order) {
-    final Map<String, dynamic> newOrder =
-        Map<String, dynamic>.from(order);
+    final Map<String, dynamic> newOrder = Map<String, dynamic>.from(order);
 
-    ordersNotifier.value = [
-      newOrder,
-      ...ordersNotifier.value,
-    ];
+    ordersNotifier.value = [newOrder, ...ordersNotifier.value];
   }
 
   void updateOrderStatus({
     required String orderNumber,
     required String status,
   }) {
-    ordersNotifier.value =
-        ordersNotifier.value.map((order) {
-      if (order["orderNumber"] == orderNumber) {
-        return {
-          ...order,
-          "status": status,
-        };
-      }
+    ordersNotifier.value = ordersNotifier.value.map((order) {
+    final String currentOrderNumber =
+        order['orderNumber']?.toString() ??
+        order['order_number']?.toString() ??
+        '';
 
-      return order;
-    }).toList();
-  }
+    if (currentOrderNumber == orderNumber) {
+      return {
+        ...order,
+        'status': status,
+      };
+    }
 
-  void clearOrders() {
-    ordersNotifier.value = [];
-  }
+    return order;
+  }).toList();
+}
 }

@@ -1,25 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:project_2/Core/di/injection_container.dart';
 import 'package:project_2/Features/auth/bloc/pharmacies_bloc.dart';
 import 'package:project_2/Features/auth/bloc/pharmacies_event.dart';
 import 'package:project_2/Features/auth/bloc/pharmacies_state.dart';
-import 'package:project_2/Features/auth/data/repositories/pharmacies_repository.dart';
-
-
 
 class ChoosePharmacyPage extends StatelessWidget {
   final double currentOrderTotal;
 
-  const ChoosePharmacyPage({
-    super.key,
-    this.currentOrderTotal = 0,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => PharmaciesBloc(PharmaciesRepository())
-        ..add(PharmaciesStarted()),
+  const ChoosePharmacyPage({super.key, this.currentOrderTotal = 0});
+@override
+   Widget build(BuildContext context) {
+    return BlocProvider<PharmaciesBloc>(
+      create: (_) => sl<PharmaciesBloc>()
+        ..add(const PharmaciesStarted()),
       child: ChoosePharmacyScreen(
         currentOrderTotal: currentOrderTotal,
       ),
@@ -30,10 +24,7 @@ class ChoosePharmacyPage extends StatelessWidget {
 class ChoosePharmacyScreen extends StatefulWidget {
   final double currentOrderTotal;
 
-  const ChoosePharmacyScreen({
-    super.key,
-    this.currentOrderTotal = 0,
-  });
+  const ChoosePharmacyScreen({super.key, this.currentOrderTotal = 0});
 
   @override
   State<ChoosePharmacyScreen> createState() => _ChoosePharmacyScreenState();
@@ -89,15 +80,15 @@ class _ChoosePharmacyScreenState extends State<ChoosePharmacyScreen> {
         body: BlocBuilder<PharmaciesBloc, PharmaciesState>(
           builder: (context, state) {
             if (state.status == PharmaciesStatus.loading) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
 
             if (state.status == PharmaciesStatus.failure) {
               return Center(
                 child: Text(
-                  state.errorMessage ?? "حدث خطأ أثناء تحميل الصيدليات",
+                state.errorMessage.isNotEmpty
+    ? state.errorMessage
+    : 'حدث خطأ أثناء تحميل الصيدليات',
                   style: const TextStyle(
                     color: Color(0xff0A2954),
                     fontSize: 16,
@@ -118,12 +109,7 @@ class _ChoosePharmacyScreenState extends State<ChoosePharmacyScreen> {
                   child: pharmaciesList.isEmpty
                       ? _buildEmptyState()
                       : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(
-                            12,
-                            6,
-                            12,
-                            20,
-                          ),
+                          padding: const EdgeInsets.fromLTRB(12, 6, 12, 20),
                           itemCount: pharmaciesList.length,
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: 10),
@@ -144,36 +130,23 @@ class _ChoosePharmacyScreenState extends State<ChoosePharmacyScreen> {
 
   Widget _buildSearchField() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        12,
-        12,
-        12,
-        8,
-      ),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
       child: TextField(
         controller: searchController,
         onChanged: (value) {
-          context.read<PharmaciesBloc>().add(
-                PharmaciesSearchChanged(value),
-              );
+          context.read<PharmaciesBloc>().add(PharmaciesSearchChanged(value));
         },
         decoration: InputDecoration(
           hintText: "ابحث عن صيدلية...",
-          hintStyle: TextStyle(
-            color: Colors.grey.shade500,
-            fontSize: 13,
-          ),
-          prefixIcon: const Icon(
-            Icons.search,
-            color: Color(0xff7A869A),
-          ),
+          hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+          prefixIcon: const Icon(Icons.search, color: Color(0xff7A869A)),
           suffixIcon: searchController.text.isNotEmpty
               ? IconButton(
                   onPressed: () {
                     searchController.clear();
                     context.read<PharmaciesBloc>().add(
-                          PharmaciesSearchChanged(""),
-                        );
+                      PharmaciesSearchChanged(""),
+                    );
                     setState(() {});
                   },
                   icon: const Icon(Icons.close, size: 19),
@@ -181,21 +154,14 @@ class _ChoosePharmacyScreenState extends State<ChoosePharmacyScreen> {
               : null,
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 12,
-          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xffD9DFEA),
-            ),
+            borderSide: const BorderSide(color: Color(0xffD9DFEA)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xff0A2954),
-              width: 1.3,
-            ),
+            borderSide: const BorderSide(color: Color(0xff0A2954), width: 1.3),
           ),
         ),
       ),
@@ -215,9 +181,7 @@ class _ChoosePharmacyScreenState extends State<ChoosePharmacyScreen> {
       height: 42,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: allAreas.length,
         itemBuilder: (context, index) {
           final area = allAreas[index];
@@ -229,9 +193,7 @@ class _ChoosePharmacyScreenState extends State<ChoosePharmacyScreen> {
               selected: isSelected,
               showCheckmark: false,
               onSelected: (_) {
-                context.read<PharmaciesBloc>().add(
-                      PharmaciesAreaChanged(area),
-                    );
+                context.read<PharmaciesBloc>().add(PharmaciesAreaChanged(area));
               },
               label: Text(area),
               backgroundColor: Colors.white,
@@ -256,27 +218,25 @@ class _ChoosePharmacyScreenState extends State<ChoosePharmacyScreen> {
     );
   }
 
-  Widget _buildPharmacyCard(
-    Map<String, dynamic> pharmacy,
-  ) {
+  Widget _buildPharmacyCard(Map<String, dynamic> pharmacy) {
     final double dueAmount = _asDouble(pharmacy["dueAmount"]);
 
-    final double balanceToShow =
-        widget.currentOrderTotal > 0 ? widget.currentOrderTotal : dueAmount;
+    final double balanceToShow = widget.currentOrderTotal > 0
+        ? widget.currentOrderTotal
+        : dueAmount;
 
     final bool hasDebt = balanceToShow > 0;
 
-    final String balanceTitle =
-        widget.currentOrderTotal > 0 ? "رصيد الطلبية" : "الرصيد المستحق";
+    final String balanceTitle = widget.currentOrderTotal > 0
+        ? "رصيد الطلبية"
+        : "الرصيد المستحق";
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xffE4E8F0),
-        ),
+        border: Border.all(color: const Color(0xffE4E8F0)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -330,26 +290,22 @@ class _ChoosePharmacyScreenState extends State<ChoosePharmacyScreen> {
                         height: 38,
                         child: ElevatedButton(
                           onPressed: () {
-                            final selectedPharmacy =
-                                Map<String, dynamic>.from(pharmacy);
+                            final selectedPharmacy = Map<String, dynamic>.from(
+                              pharmacy,
+                            );
 
                             selectedPharmacy["dueAmount"] = balanceToShow;
                             selectedPharmacy["orderBalance"] =
                                 widget.currentOrderTotal;
 
-                            Navigator.pop(
-                              context,
-                              selectedPharmacy,
-                            );
+                            Navigator.pop(context, selectedPharmacy);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xff0A2954),
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                22,
-                              ),
+                              borderRadius: BorderRadius.circular(22),
                             ),
                           ),
                           child: const Text(
@@ -396,9 +352,7 @@ class _ChoosePharmacyScreenState extends State<ChoosePharmacyScreen> {
     );
   }
 
-  Widget _buildPharmacyImage(
-    Map<String, dynamic> pharmacy,
-  ) {
+  Widget _buildPharmacyImage(Map<String, dynamic> pharmacy) {
     return Container(
       width: 56,
       height: 56,
@@ -410,11 +364,7 @@ class _ChoosePharmacyScreenState extends State<ChoosePharmacyScreen> {
       child: Image.asset(
         pharmacy["image"].toString(),
         fit: BoxFit.contain,
-        errorBuilder: (
-          context,
-          error,
-          stackTrace,
-        ) {
+        errorBuilder: (context, error, stackTrace) {
           return const Icon(
             Icons.local_pharmacy_outlined,
             size: 28,
@@ -447,9 +397,7 @@ class _ChoosePharmacyScreenState extends State<ChoosePharmacyScreen> {
           const SizedBox(height: 5),
           Text(
             "غيّري كلمة البحث أو الفلتر",
-            style: TextStyle(
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(color: Colors.grey.shade600),
           ),
         ],
       ),

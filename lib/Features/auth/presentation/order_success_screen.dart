@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:project_2/order_details_screen.dart';
-import 'package:project_2/orders_tracking_screen.dart';
+import 'package:project_2/Features/auth/presentation/ChooseCompanyScreen.dart';
+import 'package:project_2/Features/auth/presentation/order_details_screen.dart';
+import 'package:project_2/Features/auth/presentation/orders_tracking_screen.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
   final String orderNumber;
@@ -15,47 +16,36 @@ class OrderSuccessScreen extends StatelessWidget {
   });
 
   String _formatDate(DateTime date) {
-    final int hour12 = date.hour % 12 == 0
-        ? 12
-        : date.hour % 12;
+    final int hour12 = date.hour % 12 == 0 ? 12 : date.hour % 12;
 
-    final String period =
-        date.hour >= 12 ? "م" : "ص";
+    final String period = date.hour >= 12 ? "م" : "ص";
 
-    final String minute =
-        date.minute.toString().padLeft(2, "0");
+    final String minute = date.minute.toString().padLeft(2, "0");
 
     return "${date.day}/${date.month}/${date.year}"
         " - $hour12:$minute $period";
   }
 
   void _goHome(BuildContext context) {
-    Navigator.of(context).popUntil(
-      (route) => route.isFirst,
-    );
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   void _startNewOrder(BuildContext context) {
     // مؤقتاً نرجع للرئيسية.
     // لاحقاً منربطه مباشرة بواجهة اختيار الشركة.
-    Navigator.of(context).popUntil(
-      (route) => route.isFirst,
-    );
+    Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(
+      builder: (_) => const ChooseCompanyPage(),),(route) => route.isFirst);
   }
 
- void _trackOrder(BuildContext context) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => OrderDetailsScreen(
-        orderNumber: orderNumber,
+  void _trackOrder(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>const OrdersTrackingScreen(),
       ),
-    ),
-  );
-}
-
- 
- 
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,35 +54,22 @@ class OrderSuccessScreen extends StatelessWidget {
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          backgroundColor:
-              const Color(0xffF5F7FC),
+          backgroundColor: const Color(0xffF5F7FC),
           body: SafeArea(
             child: Stack(
               children: [
                 const Positioned(
                   top: 180,
                   right: -5,
-                  child: _DecorationSquare(
-                    color: Color(0xff57D5A0),
-                    size: 8,
-                  ),
+                  child: _DecorationSquare(color: Color(0xff57D5A0), size: 8),
                 ),
                 const Positioned(
                   top: 270,
                   left: 22,
-                  child: _DecorationSquare(
-                    color: Color(0xff0A2954),
-                    size: 7,
-                  ),
+                  child: _DecorationSquare(color: Color(0xff0A2954), size: 7),
                 ),
                 SingleChildScrollView(
-                  padding:
-                      const EdgeInsets.fromLTRB(
-                    16,
-                    45,
-                    16,
-                    24,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 45, 16, 24),
                   child: Column(
                     children: [
                       _buildSuccessIcon(),
@@ -202,9 +179,7 @@ class OrderSuccessScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(
-          color: const Color(0xffE5EAF1),
-        ),
+        border: Border.all(color: const Color(0xffE5EAF1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.025),
@@ -214,15 +189,11 @@ class OrderSuccessScreen extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Color(0xff7D8796),
-              fontSize: 10,
-            ),
+            style: const TextStyle(color: Color(0xff7D8796), fontSize: 10),
           ),
           const Spacer(),
           Row(
@@ -266,9 +237,7 @@ class OrderSuccessScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(
-          color: const Color(0xffE5EAF1),
-        ),
+        border: Border.all(color: const Color(0xffE5EAF1)),
       ),
       child: Row(
         children: [
@@ -279,17 +248,12 @@ class OrderSuccessScreen extends StatelessWidget {
               color: const Color(0xffEEF3FF),
               borderRadius: BorderRadius.circular(9),
             ),
-            child: Icon(
-              icon,
-              color: const Color(0xff0A2954),
-              size: 21,
-            ),
+            child: Icon(icon, color: const Color(0xff0A2954), size: 21),
           ),
           const SizedBox(width: 11),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
@@ -325,24 +289,17 @@ class OrderSuccessScreen extends StatelessWidget {
             onPressed: () {
               _trackOrder(context);
             },
-            icon: const Icon(
-              Icons.receipt_long_outlined,
-              size: 19,
-            ),
+            icon: const Icon(Icons.receipt_long_outlined, size: 19),
             label: const Text(
               "متابعة حالة الطلب",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  const Color(0xff0A2954),
+              backgroundColor: const Color(0xff0A2954),
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(9),
+                borderRadius: BorderRadius.circular(9),
               ),
             ),
           ),
@@ -355,25 +312,17 @@ class OrderSuccessScreen extends StatelessWidget {
             onPressed: () {
               _startNewOrder(context);
             },
-            icon: const Icon(
-              Icons.add_shopping_cart_outlined,
-              size: 19,
-            ),
+            icon: const Icon(Icons.add_shopping_cart_outlined, size: 19),
             label: const Text(
               "إنشاء طلبية جديدة",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  const Color(0xff64E5B3),
-              foregroundColor:
-                  const Color(0xff075943),
+              backgroundColor: const Color(0xff64E5B3),
+              foregroundColor: const Color(0xff075943),
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(9),
+                borderRadius: BorderRadius.circular(9),
               ),
             ),
           ),
@@ -383,20 +332,12 @@ class OrderSuccessScreen extends StatelessWidget {
           onPressed: () {
             _goHome(context);
           },
-          icon: const Icon(
-            Icons.home_outlined,
-            size: 19,
-          ),
+          icon: const Icon(Icons.home_outlined, size: 19),
           label: const Text(
             "العودة للرئيسية",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          style: TextButton.styleFrom(
-            foregroundColor:
-                const Color(0xff0A2954),
-          ),
+          style: TextButton.styleFrom(foregroundColor: const Color(0xff0A2954)),
         ),
       ],
     );
@@ -407,20 +348,13 @@ class _DecorationSquare extends StatelessWidget {
   final Color color;
   final double size;
 
-  const _DecorationSquare({
-    required this.color,
-    required this.size,
-  });
+  const _DecorationSquare({required this.color, required this.size});
 
   @override
   Widget build(BuildContext context) {
     return Transform.rotate(
       angle: 0.7,
-      child: Container(
-        width: size,
-        height: size,
-        color: color,
-      ),
+      child: Container(width: size, height: size, color: color),
     );
   }
 }

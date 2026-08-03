@@ -7,12 +7,10 @@ class ApiClient {
       baseUrl: 'https://your-domain.com/api',
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers: {'Accept': 'application/json'},
     ),
   );
-   void setToken(String token) {
+  void setToken(String token) {
     dio.options.headers['Authorization'] = 'Bearer $token';
   }
 

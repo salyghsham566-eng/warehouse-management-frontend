@@ -3,11 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_2/Core/api_client.dart';
 import 'package:project_2/Features/auth/bloc/profile_bloc.dart';
 import 'package:project_2/Features/auth/bloc/profile_event.dart';
-import 'package:project_2/Features/auth/data/repositories/profile_repository.dart';
+import 'package:project_2/Features/auth/domain/repositories/profile_repository.dart';
 import 'package:project_2/Features/auth/presentation/Profile.dart';
 import 'package:project_2/InventoryScreen.dart';
 import 'package:project_2/OffersScreen.dart';
-
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -15,32 +14,14 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> companies = [
-  {
-    "name": "الحكمة",
-    "icon": Icons.business,
-  },
-  {
-    "name": "أوغاريت",
-    "icon": Icons.local_pharmacy,
-  },
-  {
-    "name": "ابن حيان",
-    "icon": Icons.medication,
-  },
-  {
-    "name": "يونيفارما",
-    "icon": Icons.science,
-  },
-  {
-    "name": "آسيا",
-    "icon": Icons.inventory,
-  },
-  {
-    "name": "أفاميا",
-    "icon": Icons.healing,
-  },
-];
-const String username = "ahmad123";
+      {"name": "الحكمة", "icon": Icons.business},
+      {"name": "أوغاريت", "icon": Icons.local_pharmacy},
+      {"name": "ابن حيان", "icon": Icons.medication},
+      {"name": "يونيفارما", "icon": Icons.science},
+      {"name": "آسيا", "icon": Icons.inventory},
+      {"name": "أفاميا", "icon": Icons.healing},
+    ];
+    const String username = "ahmad123";
     const String fullName = "أحمد محمد";
     const String phone = "0999999999";
     const String role = "مندوب";
@@ -55,18 +36,18 @@ const String username = "ahmad123";
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor:  Colors.white,
+          backgroundColor: Colors.white,
           elevation: 0,
           leading: Builder(
-    builder: (scaffoldContext) {
-      return IconButton(
-        onPressed: () {
-          Scaffold.of(scaffoldContext).openDrawer();
-        },
-        icon: const Icon(Icons.menu),
-      );
-    },
-  ),
+            builder: (scaffoldContext) {
+              return IconButton(
+                onPressed: () {
+                  Scaffold.of(scaffoldContext).openDrawer();
+                },
+                icon: const Icon(Icons.menu),
+              );
+            },
+          ),
 
           title: const Text(
             'مندوب المبيعات',
@@ -106,72 +87,63 @@ const String username = "ahmad123";
             ),
             const Padding(
               padding: EdgeInsets.only(right: 8),
-              child: CircleAvatar(
-                radius: 18,
-                child: Icon(Icons.person),
-              ),
+              child: CircleAvatar(radius: 18, child: Icon(Icons.person)),
             ),
           ],
         ),
-        drawer:  Drawer(
+        drawer: Drawer(
           child: SafeArea(
             child: Column(
               children: [
                 const UserAccountsDrawerHeader(
-                decoration: BoxDecoration(
-    color: Color(0xFF12355B),
-  ),
-  accountName: Text(
-    fullName,
-    style: TextStyle(
-      color: Colors.white,
-      fontSize: 18,
-      fontWeight: FontWeight.bold,
-    ),
-  ),
-  accountEmail: Text(
-    "$role - $phone",
-    style: TextStyle(color: Colors.white70),
-  ),
-  currentAccountPicture: CircleAvatar(
-    backgroundColor: Colors.white,
-    child: Icon(
-      Icons.person,
-      size: 40,
-      color: Color(0xFF12355B),
-    ),
-  ),
-                  
+                  decoration: BoxDecoration(color: Color(0xFF12355B)),
+                  accountName: Text(
+                    fullName,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  accountEmail: Text(
+                    "$role - $phone",
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  currentAccountPicture: CircleAvatar(
+                    backgroundColor: Colors.white,
+                    child: Icon(
+                      Icons.person,
+                      size: 40,
+                      color: Color(0xFF12355B),
+                    ),
+                  ),
                 ),
 
                 ListTile(
                   leading: const Icon(Icons.person_outline),
                   title: const Text("الملف الشخصي"),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                 onTap: () {
-    Navigator.pop(context);
+                  onTap: () {
+                    Navigator.pop(context);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => BlocProvider(
-          create: (_) => ProfileBloc(
-            profileRepository: ProfileRepository(),
-          )..add(ProfileRequested()),
-          child: const ProfilePage(),
-        ),
-      ),
-    );
-  },
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider(
+                          create: (_) => ProfileBloc(
+                            profileRepository: ProfileRepository(),
+                          )..add(ProfileRequested()),
+                          child: const ProfilePage(),
+                        ),
+                      ),
+                    );
+                  },
                 ),
 
                 const Divider(),
 
                 ListTile(
-                  leading: const Icon(
-                    Icons.logout,
-                    color: Colors.red,
-                  ),
+                  leading: const Icon(Icons.logout, color: Colors.red),
                   title: const Text(
                     "تسجيل الخروج",
                     style: TextStyle(color: Colors.red),
@@ -187,13 +159,12 @@ const String username = "ahmad123";
           ),
         ),
         backgroundColor: const Color(0xffF4F5F7),
-    
+
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(14),
             child: Column(
               children: [
-
                 const SizedBox(height: 15),
 
                 /// Welcome Card
@@ -214,7 +185,7 @@ const String username = "ahmad123";
                   child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                     //ربط
+                      //ربط
                       Text(
                         "مرحباً، أحمد محمد",
                         style: TextStyle(
@@ -227,9 +198,7 @@ const String username = "ahmad123";
                       //ربط
                       Text(
                         "المنطقة الوسطى • ملخص يومك الميداني",
-                        style: TextStyle(
-                          color: Colors.white70,
-                        ),
+                        style: TextStyle(color: Colors.white70),
                       ),
                     ],
                   ),
@@ -248,41 +217,41 @@ const String username = "ahmad123";
                   children: const [
                     StatCard(
                       title: "طلبات اليوم",
-                     //ربط
+                      //ربط
                       value: "12",
                       icon: Icons.calendar_today,
                     ),
                     StatCard(
                       title: "طلبات معلقة",
-                       //ربط
+                      //ربط
                       value: "3",
                       icon: Icons.pending_actions,
                       color: Colors.orange,
                     ),
                     StatCard(
                       title: "مديونية معلقة",
-                       //ربط
+                      //ربط
                       value: "120,000",
                       icon: Icons.account_balance_wallet,
                       color: Colors.red,
                     ),
                     StatCard(
                       title: "تحصيلات اليوم",
-                       //ربط
+                      //ربط
                       value: "45,000",
                       icon: Icons.payments,
                       color: Colors.green,
                     ),
                     StatCard(
                       title: "تحقيق التارجت",
-                       //ربط
+                      //ربط
                       value: "75%",
                       icon: Icons.pie_chart,
                       color: Colors.green,
                     ),
                     StatCard(
                       title: "صيدليات مدينة",
-                       //ربط
+                      //ربط
                       value: "15",
                       icon: Icons.local_pharmacy,
                     ),
@@ -296,10 +265,7 @@ const String username = "ahmad123";
                   alignment: Alignment.centerRight,
                   child: Text(
                     "إجراءات سريعة",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                 ),
 
@@ -347,15 +313,15 @@ const String username = "ahmad123";
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       const ListTile(
-                         //ربط
+                        //ربط
                         title: Text("صيدلية الشفاء"),
-                         //ربط
+                        //ربط
                         subtitle: Text("INV-8829 • 1,250 SAR"),
                       ),
                       ElevatedButton(
                         onPressed: () {},
                         child: const Text("متابعة الطلب"),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -365,250 +331,245 @@ const String username = "ahmad123";
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: const [
-                       //ربط
-                      Text("توسعة القطاع الأوسط",  textAlign: TextAlign.right,),
+                      //ربط
+                      Text("توسعة القطاع الأوسط", textAlign: TextAlign.right),
                       SizedBox(height: 10),
                       LinearProgressIndicator(
-                         //ربط
+                        //ربط
                         value: 0.75,
                       ),
                       SizedBox(height: 10),
-                      Text("12 من أصل 16 مهمة مكتملة",  textAlign: TextAlign.right,),
+                      Text(
+                        "12 من أصل 16 مهمة مكتملة",
+                        textAlign: TextAlign.right,
+                      ),
                     ],
                   ),
                 ),
-               Container(
-  margin: const EdgeInsets.only(bottom: 15),
-  padding: const EdgeInsets.all(16),
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(16),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withOpacity(.05),
-        blurRadius: 10,
-        offset: const Offset(0, 4),
-      ),
-    ],
-  ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.end,
-    children: [
+                Container(
+                  margin: const EdgeInsets.only(bottom: 15),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text(
+                        "العروض الحالية",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
 
-      const Text(
-        "العروض الحالية",
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+                      const SizedBox(height: 15),
 
-      const SizedBox(height: 15),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(.08),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.local_offer, color: Colors.green),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                "خصم 15% على منتجات العناية بالبشرة",
+                                textAlign: TextAlign.right,
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
-      Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.green.withOpacity(.08),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Row(
-          children: [
-            Icon(
-              Icons.local_offer,
-              color: Colors.green,
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                "خصم 15% على منتجات العناية بالبشرة",
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
+                      const SizedBox(height: 15),
+
+                      const Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          "الأصناف المقترحة للبيع",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.end,
+                        children: [
+                          Chip(label: Text("Panadol")),
+                          Chip(label: Text("Omega 3")),
+                          Chip(label: Text("Vitamin C")),
+                        ],
+                      ),
+
+                      const SizedBox(height: 15),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const OffersScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text("عرض العروض"),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
+                Container(
+                  margin: const EdgeInsets.only(bottom: 15),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text(
+                        "المستودع",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
 
-      const SizedBox(height: 15),
+                      const SizedBox(height: 20),
+                      const Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          "شركات المستودع",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
 
-      const Align(
-        alignment: Alignment.centerRight,
-        child: Text(
-          "الأصناف المقترحة للبيع",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
+                      const SizedBox(height: 15),
 
-      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 95,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            CompanyCircle(
+                              name: "الحكمة",
+                              image: "assets/company1.png",
+                              onTap: () {},
+                            ),
+                            CompanyCircle(
+                              name: "أوغاريت",
+                              image: "assets/company2.png",
+                              onTap: () {},
+                            ),
+                            CompanyCircle(
+                              name: "ابن حيان",
+                              image: "assets/company3.png",
+                              onTap: () {},
+                            ),
+                            CompanyCircle(
+                              name: "يونيفارما",
+                              image: "assets/company4.png",
+                              onTap: () {},
+                            ),
+                            CompanyCircle(
+                              name: "آسيا",
+                              image: "assets/company5.png",
+                              onTap: () {},
+                            ),
+                          ],
+                        ),
+                      ),
 
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        alignment: WrapAlignment.end,
-        children: [
-          Chip(label: Text("Panadol")),
-          Chip(label: Text("Omega 3")),
-          Chip(label: Text("Vitamin C")),
-        ],
-      ),
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(.08),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              color: Colors.red,
+                            ),
 
-      const SizedBox(height: 15),
+                            SizedBox(width: 10),
 
-      SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const OffersScreen()));
-          },
-          child: const Text("عرض العروض"),
-        ),
-      ),
-    ],
-  ),
-),
-Container(
-  margin: const EdgeInsets.only(bottom: 15),
-  padding: const EdgeInsets.all(16),
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(16),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withOpacity(.05),
-        blurRadius: 10,
-        offset: const Offset(0, 4),
-      ),
-    ],
-  ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.end,
-    children: [
+                            Expanded(
+                              child: Text(
+                                "12 صنفاً قابلاً للنفاد قريباً",
+                                textAlign: TextAlign.right,
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
-      const Text(
-        "المستودع",
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+                      const SizedBox(height: 20),
 
-      const SizedBox(height: 20),
-const Align(
-  alignment: Alignment.centerRight,
-  child: Text(
-    "شركات المستودع",
-    style: TextStyle(
-      fontWeight: FontWeight.bold,
-      fontSize: 18,
-    ),
-  ),
-),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const InventoryScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.inventory_2),
+                          label: const Text("عرض الأصناف القابلة للنفاد"),
+                        ),
+                      ),
 
-const SizedBox(height: 15),
+                      const SizedBox(height: 10),
 
-SizedBox(
-  height: 95,
-  child: ListView(
-    scrollDirection: Axis.horizontal,
-    children: [
-      CompanyCircle(
-        name: "الحكمة",
-        image: "assets/company1.png",
-        onTap: () {},
-      ),
-      CompanyCircle(
-        name: "أوغاريت",
-        image: "assets/company2.png",
-        onTap: () {},
-      ),
-      CompanyCircle(
-        name: "ابن حيان",
-        image: "assets/company3.png",
-        onTap: () {},
-      ),
-      CompanyCircle(
-        name: "يونيفارما",
-        image: "assets/company4.png",
-        onTap: () {},
-      ),
-      CompanyCircle(
-        name: "آسيا",
-        image: "assets/company5.png",
-        onTap: () {},
-      ),
-    ],
-  ),
-),
-
-const SizedBox(height: 20),
-      Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.red.withOpacity(.08),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Row(
-          children: [
-
-            Icon(
-              Icons.warning_amber_rounded,
-              color: Colors.red,
-            ),
-
-            SizedBox(width: 10),
-
-            Expanded(
-              child: Text(
-                "12 صنفاً قابلاً للنفاد قريباً",
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: OutlinedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.picture_as_pdf),
+                          label: const Text("عرض الجرد PDF"),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-
-      const SizedBox(height: 20),
-
-      SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: ElevatedButton.icon(
-          onPressed: () {
-            Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const InventoryScreen()));
-          },
-          icon: const Icon(Icons.inventory_2),
-          label: const Text("عرض الأصناف القابلة للنفاد"),
-        ),
-      ),
-
-      const SizedBox(height: 10),
-
-      SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: OutlinedButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.picture_as_pdf),
-          label: const Text("عرض الجرد PDF"),
-        ),
-      ),
-    ],
-  ),
-),
 
                 _sectionCard(
                   title: "التقييم العام",
@@ -683,33 +644,31 @@ const SizedBox(height: 20),
                   ),
                 ),
 
-               
-
                 _sectionCard(
                   title: "تنبيهات حديثة",
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.end,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: const [
-                     NotificationCard(
-      title: "تمت الموافقة على الطلب INV-8829",
-      time: "قبل 15 دقيقة",
-      icon: Icons.check_circle,
-      color: Colors.green,
-    ),
+                      NotificationCard(
+                        title: "تمت الموافقة على الطلب INV-8829",
+                        time: "قبل 15 دقيقة",
+                        icon: Icons.check_circle,
+                        color: Colors.green,
+                      ),
 
-    NotificationCard(
-      title: "لقد حققت 75% من هدفك الشهري",
-      time: "قبل ساعتين",
-      icon: Icons.trending_up,
-      color: Colors.blue,
-    ),
+                      NotificationCard(
+                        title: "لقد حققت 75% من هدفك الشهري",
+                        time: "قبل ساعتين",
+                        icon: Icons.trending_up,
+                        color: Colors.blue,
+                      ),
 
-    NotificationCard(
-      title: "ملاحظات جديدة من المشرف الميداني",
-      time: "قبل 5 ساعات",
-      icon: Icons.message,
-      color: Colors.orange,
-    ),
-                      
+                      NotificationCard(
+                        title: "ملاحظات جديدة من المشرف الميداني",
+                        time: "قبل 5 ساعات",
+                        icon: Icons.message,
+                        color: Colors.orange,
+                      ),
                     ],
                   ),
                 ),
@@ -721,39 +680,31 @@ const SizedBox(height: 20),
     );
   }
 
-  static Widget _sectionCard({
-    required String title,
-    required Widget child,
-  }) {
+  static Widget _sectionCard({required String title, required Widget child}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(15),
-      decoration:BoxDecoration(
-  color: Colors.white,
-  borderRadius: BorderRadius.circular(16),
-  boxShadow: [
-    BoxShadow(
-  
-    color: Colors.grey.shade300,
-    blurRadius: 15,
-    spreadRadius: 2,
-    offset: const Offset(0, 5),
-    ),
-  ],
-
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade300,
+            blurRadius: 15,
+            spreadRadius: 2,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         children: [
-     Align(
-  alignment: Alignment.centerRight,
-  child: Text(
-    title,
-    style: const TextStyle(
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
-    ),
-  ),
-),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
           const SizedBox(height: 15),
           child,
         ],
@@ -805,7 +756,7 @@ class StatCard extends StatelessWidget {
               fontSize: 22,
               fontWeight: FontWeight.bold,
             ),
-          )
+          ),
         ],
       ),
     );
@@ -830,9 +781,9 @@ class QuickAction extends StatelessWidget {
       width: 90,
       margin: const EdgeInsets.only(left: 10),
       decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
-       /*   BoxShadow(
+          /*   BoxShadow(
             color: Colors.black.withOpacity(0.08),
             blurRadius: 12,
             offset: const Offset(0, 6),
@@ -841,11 +792,7 @@ class QuickAction extends StatelessWidget {
       ),
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: color,
-            child: Icon(icon),
-          ),
+          CircleAvatar(radius: 28, backgroundColor: color, child: Icon(icon)),
           const SizedBox(height: 8),
           Text(title),
         ],
@@ -886,15 +833,15 @@ class NotificationCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-Container(
-  width: 4,
-  height: 50,
-  decoration: BoxDecoration(
-    color: color,
-    borderRadius: BorderRadius.circular(10),
-  ),
-),
-const SizedBox(width: 12),
+          Container(
+            width: 4,
+            height: 50,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          const SizedBox(width: 12),
           Container(
             width: 46,
             height: 46,
@@ -902,10 +849,7 @@ const SizedBox(width: 12),
               color: color.withOpacity(.15),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              color: color,
-            ),
+            child: Icon(icon, color: color),
           ),
 
           const SizedBox(width: 12),
@@ -925,10 +869,7 @@ const SizedBox(width: 12),
                 const SizedBox(height: 4),
                 Text(
                   time,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                 ),
               ],
             ),
@@ -938,6 +879,7 @@ const SizedBox(width: 12),
     );
   }
 }
+
 class CompanyCircle extends StatelessWidget {
   final String name;
   final String image;
@@ -965,10 +907,7 @@ class CompanyCircle extends StatelessWidget {
               backgroundImage: AssetImage(image),
             ),
             const SizedBox(height: 6),
-            Text(
-              name,
-              style: const TextStyle(fontSize: 12),
-            ),
+            Text(name, style: const TextStyle(fontSize: 12)),
           ],
         ),
       ),

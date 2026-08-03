@@ -12,7 +12,7 @@ class InventoryPdfScreen extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          
+
           title: const Text(
             "جرد المستودع",
             style: TextStyle(
@@ -21,7 +21,6 @@ class InventoryPdfScreen extends StatelessWidget {
             ),
           ),
           centerTitle: true,
-          
         ),
         body: Padding(
           padding: const EdgeInsets.all(16),
@@ -179,10 +178,7 @@ class InventoryPdfScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   sku,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
@@ -226,9 +222,7 @@ class InventoryPdfScreen extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: bgColor,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         elevation: 2,
       ),
     );

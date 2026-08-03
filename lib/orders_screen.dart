@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:project_2/Core/di/injection_container.dart';
+import 'package:project_2/Features/auth/bloc/orders_tracking_bloc.dart';
+import 'package:project_2/Features/auth/bloc/orders_tracking_event.dart';
+import 'package:project_2/Features/auth/bloc/orders_tracking_state.dart';
 import 'package:project_2/Features/auth/presentation/ChooseCompanyScreen.dart';
-import 'package:project_2/order_details_screen.dart';
-import 'package:project_2/orders_archive_screen.dart';
-import 'package:project_2/orders_store.dart';
-import 'package:project_2/orders_tracking_screen.dart';
+import 'package:project_2/Features/auth/presentation/order_details_screen.dart';
+import 'package:project_2/Features/auth/presentation/orders_archive_screen.dart';
+import 'package:project_2/Features/auth/presentation/orders_tracking_screen.dart';
 
 class OrdersScreen extends StatefulWidget {
+
   const OrdersScreen({Key? key}) : super(key: key);
 
   @override
@@ -13,214 +18,252 @@ class OrdersScreen extends StatefulWidget {
 }
 
 class _OrdersScreenState extends State<OrdersScreen> {
-  final List<Map<String, dynamic>> orders = [
-    {
-      "pharmacy": "صيدلية الشفاء المركزية",
-      "orderNo": "ORD-9982",
-      "price": "2,450.00",
-      "date": "12 أكتوبر 2023",
-      "status": "بانتظار المراجعة",
-      "color": Colors.orange,
-    },
-    {
-      "pharmacy": "مجموعة صيدليات النهدي",
-      "orderNo": "ORD-9975",
-      "price": "12,890.00",
-      "date": "10 أكتوبر 2023",
-      "status": "معتمد",
-      "color": Colors.green,
-    },
-    {
-      "pharmacy": "صيدلية زهرة الروضة",
-      "orderNo": "ORD-9961",
-      "price": "540.00",
-      "date": "08 أكتوبر 2023",
-      "status": "مرفوض",
-      "color": Colors.red,
-    },
-  ];
+  late final OrdersTrackingBloc _ordersBloc;
+  @override
+void initState() {
+  super.initState();
+
+  _ordersBloc = sl<OrdersTrackingBloc>()
+    ..add(const OrdersTrackingStarted());
+}
+
+@override
+void dispose() {
+  _ordersBloc.close();
+  super.dispose();
+}
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: const Color(0xffF5F6FA),
-
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: Colors.white,
-          centerTitle: true,
-
-          title: const Text(
-            "الطلبات",
-            style: TextStyle(
-              color: Color(0xff081F4D),
-              fontWeight: FontWeight.bold,
-              fontSize: 25,
+    return  BlocProvider<OrdersTrackingBloc>.value(
+  value: _ordersBloc,
+    
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: const Color(0xffF5F6FA),
+      
+          appBar: AppBar(
+            elevation: 0,
+            backgroundColor: Colors.white,
+            centerTitle: true,
+      
+            title: const Text(
+              "الطلبات",
+              style: TextStyle(
+                color: Color(0xff081F4D),
+                fontWeight: FontWeight.bold,
+                fontSize: 25,
+              ),
             ),
-          ),
-
-          actions: [
-            Stack(
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.shopping_cart_outlined,
-                    color: Colors.black87,
-                    size: 30,
-                  ),
-                  onPressed: () {},
-                ),
-
-                Positioned(
-                  top: 6,
-                  left: 6,
-                  child: Container(
-                    width: 18,
-                    height: 18,
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
+      
+            actions: [
+              Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.shopping_cart_outlined,
+                      color: Colors.black87,
+                      size: 30,
                     ),
-                    child: const Center(
-                      child: Text(
-                        "3",
-                        style: TextStyle(color: Colors.white, fontSize: 11),
-                      ),
-                    ),
+                    onPressed: () {},
                   ),
-                ),
-              ],
-            ),
-          ],
-        ),
-
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-
-            child: Column(
-              children: [
-                ////////////////////////////////////////////////
-                /// Welcome Card
-                ////////////////////////////////////////////////
-
-                /// Welcome Card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xff163B6B),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.12),
-                        blurRadius: 14,
-                        offset: const Offset(0, 6),
+      
+                  Positioned(
+                    top: 6,
+                    left: 6,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
                       ),
-                    ],
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      //ربط
-                      Text(
-                        "مرحباً، أحمد محمد",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                      child: const Center(
+                        child: Text(
+                          "3",
+                          style: TextStyle(color: Colors.white, fontSize: 11),
                         ),
                       ),
-                      SizedBox(height: 6),
-
-                      //ربط
-                    ],
-                  ),
-                ),
-
-                const SizedBox(
-                  height: 22,
-                ), ////////////////////////////////////////////////
-                /// Create Order Card
-                ////////////////////////////////////////////////
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChooseCompanyPage(),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(22),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 22,
-                      vertical: 28,
                     ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+      
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+      
+              child: Column(
+                children: [
+                  ////////////////////////////////////////////////
+                  /// Welcome Card
+                  ////////////////////////////////////////////////
+      
+                  /// Welcome Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xff082B63),
-                      borderRadius: BorderRadius.circular(22),
+                      color: const Color(0xff163B6B),
+                      borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(.25),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-                    child: Row(
-                      textDirection: TextDirection.rtl,
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          Icons.arrow_back_ios_new,
-                          color: Colors.white,
-                        ),
-
-                        const Spacer(),
-
-                        const Text(
-                          "إنشاء طلبية جديدة",
+                        //ربط
+                        Text(
+                          "مرحباً، أحمد محمد",
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 25,
                             fontWeight: FontWeight.bold,
+                            fontSize: 18,
                           ),
                         ),
-
-                        const SizedBox(width: 18),
-
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(.15),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(
-                            Icons.add_shopping_cart,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                        ),
+                        SizedBox(height: 6),
+      
+                        //ربط
                       ],
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 22),
-
-                ////////////////////////////////////////////////
-                /// Two Cards
-                ////////////////////////////////////////////////
-                Row(
-                  children: [
-                    Expanded(
-                      child: _menuCard(
-                        title: "أرشيف الطلبات",
-                        icon: Icons.history,
+      
+                  const SizedBox(
+                    height: 22,
+                  ), ////////////////////////////////////////////////
+                  /// Create Order Card
+                  ////////////////////////////////////////////////
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChooseCompanyPage(),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(22),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 22,
+                        vertical: 28,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xff082B63),
+                        borderRadius: BorderRadius.circular(22),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        textDirection: TextDirection.rtl,
+                        children: [
+                          const Icon(
+                            Icons.arrow_back_ios_new,
+                            color: Colors.white,
+                          ),
+      
+                          const Spacer(),
+      
+                          const Text(
+                            "إنشاء طلبية جديدة",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 25,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+      
+                          const SizedBox(width: 18),
+      
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(.15),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(
+                              Icons.add_shopping_cart,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+      
+                  const SizedBox(height: 22),
+      
+                  ////////////////////////////////////////////////
+                  /// Two Cards
+                  ////////////////////////////////////////////////
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _menuCard(
+                          title: "أرشيف الطلبات",
+                          icon: Icons.history,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const OrdersArchiveScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+      
+                      const SizedBox(width: 16),
+      
+                      Expanded(
+                        child: _menuCard(
+                          title: "حالة الطلبات",
+                          icon: Icons.assignment_outlined,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => OrdersTrackingScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+      
+                  const SizedBox(height: 22),
+      
+                  ////////////////////////////////////////////////
+                  /// آخر الطلبات
+                  ////////////////////////////////////////////////
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "آخر الطلبات",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+      
+                      InkWell(
                         onTap: () {
                           Navigator.push(
                             context,
@@ -229,143 +272,155 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             ),
                           );
                         },
-                      ),
-                    ),
-
-                    const SizedBox(width: 16),
-
-                    Expanded(
-                      child: _menuCard(
-                        title: "حالة الطلبات",
-                        icon: Icons.assignment_outlined,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => OrdersTrackingScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 22),
-
-                ////////////////////////////////////////////////
-                /// آخر الطلبات
-                ////////////////////////////////////////////////
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "آخر الطلبات",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const OrdersArchiveScreen(),
+                        child: const Text(
+                          "عرض الكل",
+                          style: TextStyle(
+                            color: Color(0xff082B63),
+                            fontWeight: FontWeight.bold,
                           ),
-                        );
-                      },
-                      child: const Text(
-                        "عرض الكل",
-                        style: TextStyle(
-                          color: Color(0xff082B63),
-                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+      
+                  const SizedBox(height: 15),
+      BlocBuilder<OrdersTrackingBloc, OrdersTrackingState>(
+  builder: (context, state) {
+    if (state is OrdersTrackingInitial ||
+        state is OrdersTrackingLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 35),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (state is OrdersTrackingFailure) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(
+          vertical: 30,
+          horizontal: 20,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.cloud_off_outlined,
+              size: 45,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              state.message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: () {
+                context.read<OrdersTrackingBloc>().add(
+                  const OrdersTrackingStarted(),
+                );
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('إعادة المحاولة'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state is OrdersTrackingLoaded) {
+      final List<Map<String, dynamic>> latestOrders =
+          state.orders
+              .map((order) => order.toMap())
+              .toList();
+
+      latestOrders.sort((firstOrder, secondOrder) {
+        final DateTime firstDate = _parseOrderDate(
+          firstOrder['createdAt'] ??
+              firstOrder['created_at'] ??
+              firstOrder['date'],
+        );
+
+        final DateTime secondDate = _parseOrderDate(
+          secondOrder['createdAt'] ??
+              secondOrder['created_at'] ??
+              secondOrder['date'],
+        );
+
+        return secondDate.compareTo(firstDate);
+      });
+
+      final List<Map<String, dynamic>> lastThreeOrders =
+          latestOrders.take(3).toList();
+
+      if (lastThreeOrders.isEmpty) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            vertical: 35,
+            horizontal: 20,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: const Column(
+            children: [
+              Icon(
+                Icons.inventory_2_outlined,
+                size: 45,
+                color: Colors.grey,
+              ),
+              SizedBox(height: 10),
+              Text(
+                'لا توجد طلبات حتى الآن',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 15,
                 ),
+              ),
+            ],
+          ),
+        );
+      }
 
-                const SizedBox(height: 15),
+      return ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: lastThreeOrders.length,
+        itemBuilder: (context, index) {
+          return _orderCard(
+            context,
+            lastThreeOrders[index],
+          );
+        },
+      );
+    }
 
-                ValueListenableBuilder<List<Map<String, dynamic>>>(
-                  valueListenable: OrdersStore.instance.ordersNotifier,
-                  builder: (context, storedOrders, child) {
-                    // نعمل نسخة حتى لا نغيّر ترتيب القائمة الأصلية.
-                    final latestOrders = List<Map<String, dynamic>>.from(
-                      storedOrders,
-                    );
-
-                    // ترتيب الطلبات من الأحدث إلى الأقدم.
-                    latestOrders.sort((firstOrder, secondOrder) {
-                      final firstDate = _parseOrderDate(
-                        firstOrder["date"] ?? firstOrder["createdAt"],
-                      );
-
-                      final secondDate = _parseOrderDate(
-                        secondOrder["date"] ?? secondOrder["createdAt"],
-                      );
-
-                      return secondDate.compareTo(firstDate);
-                    });
-
-                    // نأخذ أحدث 3 طلبات فقط.
-                    final lastThreeOrders = latestOrders.take(3).toList();
-
-                    if (lastThreeOrders.isEmpty) {
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 35,
-                          horizontal: 20,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: const Column(
-                          children: [
-                            Icon(
-                              Icons.inventory_2_outlined,
-                              size: 45,
-                              color: Colors.grey,
-                            ),
-                            SizedBox(height: 10),
-                            Text(
-                              "لا توجد طلبات حتى الآن",
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: lastThreeOrders.length,
-                      itemBuilder: (context, index) {
-                        final order = lastThreeOrders[index];
-
-                        return _orderCard(context, order);
-                      },
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 30),
-
-                /// الأجزاء التالية سنضيفها بالرسالة القادمة
-              ],
+    return const SizedBox.shrink();
+  },
+),
+                  
+                  const SizedBox(height: 30),
+      
+                  /// الأجزاء التالية سنضيفها بالرسالة القادمة
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      ),);
+
   }
 }
 

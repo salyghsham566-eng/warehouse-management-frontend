@@ -1,9 +1,4 @@
-enum CompanyFilter {
-  all,
-  hasOffers,
-  noOffers,
-  mostProducts,
-}
+enum CompanyFilter { all, hasOffers, noOffers, mostProducts }
 
 abstract class CompaniesEvent {}
 

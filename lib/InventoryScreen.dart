@@ -13,10 +13,7 @@ class InventoryScreen extends StatelessWidget {
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -24,7 +21,6 @@ class InventoryScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                     
                       const Text(
                         'نظرة عامة على المخزون',
                         style: TextStyle(
@@ -38,19 +34,16 @@ class InventoryScreen extends StatelessWidget {
                           elevation: 0,
                           backgroundColor: const Color(0xffDCE8FF),
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         onPressed: () {
                           Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (_) => InventoryPdfScreen(
-   
-    ),
-  ),
-);
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => InventoryPdfScreen(),
+                            ),
+                          );
                         },
                         icon: const Icon(
                           Icons.picture_as_pdf_outlined,
@@ -58,9 +51,7 @@ class InventoryScreen extends StatelessWidget {
                         ),
                         label: const Text(
                           "عرض الجرد PDF",
-                          style: TextStyle(
-                            color: Color(0xff274C77),
-                          ),
+                          style: TextStyle(color: Color(0xff274C77)),
                         ),
                       ),
                     ],
@@ -76,15 +67,11 @@ class InventoryScreen extends StatelessWidget {
                       height: 100,
                       decoration: BoxDecoration(
                         color: const Color(0xffFDE7E5),
-                        borderRadius:
-                            BorderRadius.circular(18),
-                        border: Border.all(
-                          color: const Color(0xffF5B5B0),
-                        ),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xffF5B5B0)),
                       ),
                       child: const Column(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
                             'تنبيهات النفاذ',
@@ -112,8 +99,7 @@ class InventoryScreen extends StatelessWidget {
 
                   /// Title
                   const Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Icon(
                         Icons.warning_amber_rounded,
@@ -213,9 +199,7 @@ class InventoryScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.grey.shade300,
-        ),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Row(
         children: [
@@ -223,24 +207,18 @@ class InventoryScreen extends StatelessWidget {
             width: 95,
             height: 95,
             decoration: BoxDecoration(
-              borderRadius:
-                  BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12),
               color: Colors.grey.shade200,
             ),
             child: ClipRRect(
-              borderRadius:
-                  BorderRadius.circular(12),
-              child: Image.asset(
-                image,
-                fit: BoxFit.cover,
-              ),
+              borderRadius: BorderRadius.circular(12),
+              child: Image.asset(image, fit: BoxFit.cover),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -249,16 +227,12 @@ class InventoryScreen extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xffFDEAEA),
-                    borderRadius:
-                        BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                        textAlign: TextAlign.right,
+                    textAlign: TextAlign.right,
                     quantity,
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 16,
-                    ),
+                    style: const TextStyle(color: Colors.red, fontSize: 16),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -282,33 +256,24 @@ class InventoryScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Text(
                       expiry,
-                      style: const TextStyle(
-                        color: Color(0xff616E7C),
-                      ),
+                      style: const TextStyle(color: Color(0xff616E7C)),
                     ),
                     const SizedBox(width: 5),
                     const Text(
                       "تاريخ الانتهاء:",
-                      style: TextStyle(
-                        color: Color(0xff616E7C),
-                      ),
+                      style: TextStyle(color: Color(0xff616E7C)),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
-                      Icons.calendar_today_outlined,
-                      size: 16,
-                    ),
+                    const Icon(Icons.calendar_today_outlined, size: 16),
                   ],
                 ),
                 const SizedBox(height: 10),
                 const Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Text(
                       "طلب توريد",
@@ -319,20 +284,13 @@ class InventoryScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_back,
-                      color: Colors.green,
-                    ),
+                    Icon(Icons.arrow_back, color: Colors.green),
                   ],
                 ),
                 const SizedBox(height: 10),
                 ClipRRect(
-                  borderRadius:
-                      BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: .85,
-                    minHeight: 6,
-                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(value: .85, minHeight: 6),
                 ),
               ],
             ),
@@ -352,61 +310,39 @@ class InventoryScreen extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.grey.shade300,
-        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 5,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: const Color(0xffFFF1D6),
-              borderRadius:
-                  BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: const Text(
               "تنتهي خلال 3 أشهر",
-              style: TextStyle(
-                color: Color(0xffD9822B),
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Color(0xffD9822B), fontSize: 12),
             ),
           ),
           const Spacer(),
           Text(
             title,
             textAlign: TextAlign.right,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 18,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
           ),
           const SizedBox(height: 8),
           Text(
             "الكمية: $quantity",
-            style: const TextStyle(
-              color: Color(0xff616E7C),
-            ),
+            style: const TextStyle(color: Color(0xff616E7C)),
           ),
           const SizedBox(height: 12),
           Row(
-            mainAxisAlignment:
-                MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(
-                date,
-                style: const TextStyle(
-                  color: Colors.red,
-                ),
-              ),
+              Text(date, style: const TextStyle(color: Colors.red)),
               const SizedBox(width: 4),
               const Icon(
                 Icons.access_time_outlined,
