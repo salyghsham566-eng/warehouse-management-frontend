@@ -3,35 +3,60 @@ import 'package:project_2/Features/auth/bloc/collection_payment_form_event.dart'
 import 'package:project_2/Features/auth/bloc/collection_payment_form_state.dart';
 import 'package:project_2/Features/auth/data/models/2pharmacy_model.dart';
 import 'package:project_2/Features/auth/data/models/collection_payment_model.dart';
+import 'package:project_2/Features/auth/data/models/create_collection_payment_request.dart';
 import 'package:project_2/Features/auth/domain/repositories/collection_payment_repository.dart';
 
-class CollectionPaymentFormBloc
-    extends Bloc<CollectionPaymentFormEvent, CollectionPaymentFormState> {
+class CollectionPaymentFormBloc extends Bloc<
+    CollectionPaymentFormEvent,
+    CollectionPaymentFormState> {
   CollectionPaymentFormBloc({
-    required CollectionPharmacyModel pharmacy,
-    required CollectionPaymentRepository repository,
-  }) : _pharmacy = pharmacy,
-       _repository = repository,
-       super(
-         CollectionPaymentFormState(officialBalance: pharmacy.officialBalance),
-       ) {
-    on<CollectionPaymentAmountChanged>(_onAmountChanged);
+    required this.repository,
+    required this.pharmacy,
+  }) : super(
+          CollectionPaymentFormState(
+            officialBalance:
+                pharmacy.officialBalance,
+            enteredAmount: 0,
+            paymentDate: DateTime.now(),
+            paymentMethod:
+                CollectionPaymentMethod.cash,
+            notes: '',
+            submitStatus:
+                CollectionPaymentSubmitStatus
+                    .initial,
+          ),
+        ) {
+    on<CollectionPaymentAmountChanged>(
+      _onAmountChanged,
+    );
 
-    on<CollectionPaymentDateChanged>(_onDateChanged);
+    on<CollectionPaymentDateChanged>(
+      _onDateChanged,
+    );
 
-    on<CollectionPaymentMethodChanged>(_onMethodChanged);
+    on<CollectionPaymentMethodChanged>(
+      _onMethodChanged,
+    );
 
-    on<CollectionPaymentNotesChanged>(_onNotesChanged);
+    on<CollectionPaymentNotesChanged>(
+      _onNotesChanged,
+    );
 
-    on<CollectionPaymentReceiptChanged>(_onReceiptChanged);
+    on<CollectionPaymentReceiptChanged>(
+      _onReceiptChanged,
+    );
 
-    on<CollectionPaymentReceiptRemoved>(_onReceiptRemoved);
+    on<CollectionPaymentReceiptRemoved>(
+      _onReceiptRemoved,
+    );
 
-    on<CollectionPaymentSubmitted>(_onSubmitted);
+    on<CollectionPaymentSubmitted>(
+      _onSubmitted,
+    );
   }
 
-  final CollectionPharmacyModel _pharmacy;
-  final CollectionPaymentRepository _repository;
+  final CollectionPaymentRepository repository;
+  final CollectionPharmacyModel pharmacy;
 
   void _onAmountChanged(
     CollectionPaymentAmountChanged event,
@@ -39,9 +64,12 @@ class CollectionPaymentFormBloc
   ) {
     emit(
       state.copyWith(
-        amountText: event.amount,
-        submitStatus: CollectionPaymentSubmitStatus.initial,
-        clearErrorMessage: true,
+        enteredAmount:
+            _parseAmount(event.value),
+        submitStatus:
+            CollectionPaymentSubmitStatus.initial,
+        savedPayment: null,
+        errorMessage: null,
       ),
     );
   }
@@ -53,8 +81,9 @@ class CollectionPaymentFormBloc
     emit(
       state.copyWith(
         paymentDate: event.date,
-        submitStatus: CollectionPaymentSubmitStatus.initial,
-        clearErrorMessage: true,
+        submitStatus:
+            CollectionPaymentSubmitStatus.initial,
+        errorMessage: null,
       ),
     );
   }
@@ -66,8 +95,9 @@ class CollectionPaymentFormBloc
     emit(
       state.copyWith(
         paymentMethod: event.method,
-        submitStatus: CollectionPaymentSubmitStatus.initial,
-        clearErrorMessage: true,
+        submitStatus:
+            CollectionPaymentSubmitStatus.initial,
+        errorMessage: null,
       ),
     );
   }
@@ -79,8 +109,6 @@ class CollectionPaymentFormBloc
     emit(
       state.copyWith(
         notes: event.notes,
-        submitStatus: CollectionPaymentSubmitStatus.initial,
-        clearErrorMessage: true,
       ),
     );
   }
@@ -92,8 +120,6 @@ class CollectionPaymentFormBloc
     emit(
       state.copyWith(
         receiptImagePath: event.imagePath,
-        submitStatus: CollectionPaymentSubmitStatus.initial,
-        clearErrorMessage: true,
       ),
     );
   }
@@ -104,9 +130,7 @@ class CollectionPaymentFormBloc
   ) {
     emit(
       state.copyWith(
-        removeReceiptImage: true,
-        submitStatus: CollectionPaymentSubmitStatus.initial,
-        clearErrorMessage: true,
+        receiptImagePath: null,
       ),
     );
   }
@@ -115,45 +139,29 @@ class CollectionPaymentFormBloc
     CollectionPaymentSubmitted event,
     Emitter<CollectionPaymentFormState> emit,
   ) async {
-    final double amount = state.enteredAmount;
-
-    if (amount <= 0) {
+    if (state.enteredAmount <= 0) {
       emit(
         state.copyWith(
-          submitStatus: CollectionPaymentSubmitStatus.failure,
-          errorMessage: 'يرجى إدخال مبلغ صحيح أكبر من صفر',
+          submitStatus:
+              CollectionPaymentSubmitStatus
+                  .failure,
+          errorMessage:
+              'أدخل مبلغاً صحيحاً',
         ),
       );
 
       return;
     }
 
-    if (amount > state.officialBalance) {
+    if (state.enteredAmount >
+        state.officialBalance) {
       emit(
         state.copyWith(
-          submitStatus: CollectionPaymentSubmitStatus.failure,
-          errorMessage: 'المبلغ المدخل أكبر من الرصيد الرسمي',
-        ),
-      );
-
-      return;
-    }
-
-    final DateTime now = DateTime.now();
-
-    final DateTime selectedDay = DateTime(
-      state.paymentDate.year,
-      state.paymentDate.month,
-      state.paymentDate.day,
-    );
-
-    final DateTime today = DateTime(now.year, now.month, now.day);
-
-    if (selectedDay.isAfter(today)) {
-      emit(
-        state.copyWith(
-          submitStatus: CollectionPaymentSubmitStatus.failure,
-          errorMessage: 'لا يمكن اختيار تاريخ مستقبلي',
+          submitStatus:
+              CollectionPaymentSubmitStatus
+                  .failure,
+          errorMessage:
+              'المبلغ أكبر من الرصيد الرسمي',
         ),
       );
 
@@ -162,43 +170,114 @@ class CollectionPaymentFormBloc
 
     emit(
       state.copyWith(
-        submitStatus: CollectionPaymentSubmitStatus.submitting,
-        clearErrorMessage: true,
+        submitStatus:
+            CollectionPaymentSubmitStatus
+                .submitting,
+        savedPayment: null,
+        errorMessage: null,
       ),
     );
 
     try {
-      final CollectionPaymentCreateRequest request =
-          CollectionPaymentCreateRequest(
-            pharmacyId: _pharmacy.id,
-            pharmacyName: _pharmacy.name,
-            amount: amount,
-            paymentDate: state.paymentDate,
-            paymentMethod: state.paymentMethod,
-            officialBalanceBefore: state.officialBalance,
-            expectedBalanceAfter: state.expectedBalance,
-            notes: state.notes.trim().isEmpty ? null : state.notes.trim(),
-            receiptImagePath: state.receiptImagePath,
-          );
-
-      final CollectionPaymentModel payment = await _repository.createPayment(
-        request,
+      final payment =
+          await repository.createCollectionPayment(
+       CreateCollectionPaymentRequest(
+  pharmacyId: pharmacy.id,
+  pharmacyName: pharmacy.name,
+  officialBalanceBefore:
+      pharmacy.officialBalance,
+  amount: state.enteredAmount,
+  paymentDate: state.paymentDate,
+  paymentMethod: state.paymentMethod,
+  notes: state.notes,
+  receiptImagePath:
+      state.receiptImagePath,
+),
       );
 
+     final savedPayment = CollectionPaymentModel(
+  id: payment.id,
+  pharmacyId: payment.pharmacyId,
+  pharmacyName:
+      payment.pharmacyName.trim().isEmpty
+          ? pharmacy.name
+          : payment.pharmacyName,
+  amount: payment.amount,
+  paymentDate: payment.paymentDate,
+  paymentMethod: payment.paymentMethod,
+  status: payment.status,
+
+  officialBalanceBefore:
+      payment.officialBalanceBefore,
+
+  expectedBalanceAfter:
+      payment.expectedBalanceAfter,
+
+  officialBalanceAfter:
+      payment.officialBalanceAfter,
+
+  approvedAt: payment.approvedAt,
+  rejectedAt: payment.rejectedAt,
+
+  notes: payment.notes,
+  receiptImagePath:
+      payment.receiptImagePath,
+  rejectionReason:
+      payment.rejectionReason,
+);
       emit(
         state.copyWith(
-          submitStatus: CollectionPaymentSubmitStatus.success,
-          savedPayment: payment,
-          clearErrorMessage: true,
+          submitStatus:
+              CollectionPaymentSubmitStatus
+                  .success,
+          savedPayment: savedPayment,
+          errorMessage: null,
         ),
       );
-    } catch (_) {
+    } catch (error) {
       emit(
         state.copyWith(
-          submitStatus: CollectionPaymentSubmitStatus.failure,
-          errorMessage: 'تعذر حفظ الدفعة، حاول مرة أخرى',
+          submitStatus:
+              CollectionPaymentSubmitStatus
+                  .failure,
+          savedPayment: null,
+          errorMessage: error
+              .toString()
+              .replaceFirst('Exception: ', '')
+              .trim(),
         ),
       );
     }
+  }
+
+  double _parseAmount(String value) {
+    String normalized = value.trim();
+
+    const arabicNumbers = {
+      '٠': '0',
+      '١': '1',
+      '٢': '2',
+      '٣': '3',
+      '٤': '4',
+      '٥': '5',
+      '٦': '6',
+      '٧': '7',
+      '٨': '8',
+      '٩': '9',
+    };
+
+    arabicNumbers.forEach((arabic, english) {
+      normalized =
+          normalized.replaceAll(
+        arabic,
+        english,
+      );
+    });
+
+    normalized = normalized
+        .replaceAll('٫', '.')
+        .replaceAll(',', '.');
+
+    return double.tryParse(normalized) ?? 0;
   }
 }

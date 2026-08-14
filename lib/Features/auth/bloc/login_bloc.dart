@@ -1,37 +1,57 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../data/auth_repository.dart';
+import 'package:project_2/Features/auth/domain/exception/login_exception.dart';
+import 'package:project_2/Features/auth/domain/repositories/login_repository.dart';
+
 import 'login_event.dart';
 import 'login_state.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
-  final AuthRepository authRepository;
+  final LoginRepository repository;
 
-  LoginBloc(this.authRepository) : super(LoginInitial()) {
+  LoginBloc({
+    required this.repository,
+  }) : super(LoginInitial()) {
     on<LoginSubmitted>(_login);
   }
 
-  Future<void> _login(LoginSubmitted event, Emitter<LoginState> emit) async {
-    if (event.usernameOrPhone.isEmpty || event.password.isEmpty) {
-      emit(LoginFailure('يرجى إدخال جميع البيانات'));
+  Future<void> _login(
+    LoginSubmitted event,
+    Emitter<LoginState> emit,
+  ) async {
+    final username =
+        event.usernameOrPhone.trim();
+
+    final password =
+        event.password.trim();
+
+    if (username.isEmpty || password.isEmpty) {
+      emit(
+        LoginFailure(
+          'يرجى إدخال اسم المستخدم وكلمة المرور',
+        ),
+      );
       return;
     }
 
     emit(LoginLoading());
 
     try {
-      final result = await authRepository.login(
-        usernameOrPhone: event.usernameOrPhone,
-        password: event.password,
+      await repository.login(
+        usernameOrPhone: username,
+        password: password,
       );
 
-      if (result.role != 'representative') {
-        emit(LoginFailure('هذا الحساب غير مسموح له بالدخول إلى هذه الواجهة'));
-        return;
-      }
-
       emit(LoginSuccess());
-    } catch (e) {
-      emit(LoginFailure(e.toString().replaceAll('Exception: ', '')));
+    } on LoginException catch (e) {
+      emit(
+        LoginFailure(e.message),
+      );
+    } catch (_) {
+      emit(
+        LoginFailure(
+          'تعذر تسجيل الدخول، يرجى المحاولة مرة أخرى',
+        ),
+      );
     }
   }
 }

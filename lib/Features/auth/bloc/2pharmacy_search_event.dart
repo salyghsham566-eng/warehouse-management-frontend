@@ -1,21 +1,49 @@
 import 'package:equatable/equatable.dart';
+import 'package:project_2/Features/auth/bloc/collection_pharmacies_filter.dart';
 
-abstract class PharmacySearchEvent extends Equatable {
-  const PharmacySearchEvent();
-
-  @override
-  List<Object?> get props => const [];
-}
-
-class PharmacySearchRequested extends PharmacySearchEvent {
-  const PharmacySearchRequested();
-}
-
-class PharmacySearchQueryChanged extends PharmacySearchEvent {
-  const PharmacySearchQueryChanged(this.query);
-
-  final String query;
+abstract class CollectionPharmaciesEvent
+    extends Equatable {
+  const CollectionPharmaciesEvent();
 
   @override
-  List<Object?> get props => [query];
+  List<Object?> get props => [];
+}
+
+class LoadCollectionPharmaciesEvent
+    extends CollectionPharmaciesEvent {
+  const LoadCollectionPharmaciesEvent();
+}
+
+class RefreshCollectionPharmaciesEvent
+    extends CollectionPharmaciesEvent {
+  const RefreshCollectionPharmaciesEvent();
+}
+
+class SearchCollectionPharmaciesEvent
+    extends CollectionPharmaciesEvent {
+  const SearchCollectionPharmaciesEvent({
+    required this.searchText,
+  });
+
+  final String searchText;
+
+  @override
+  List<Object?> get props => [searchText];
+}
+
+class ChangeCollectionPharmacyFilterEvent
+    extends CollectionPharmaciesEvent {
+  const ChangeCollectionPharmacyFilterEvent({
+    required this.filter,
+  });
+
+  final CollectionPharmacyFilter filter;
+
+  @override
+  List<Object?> get props => [filter];
+}
+
+class ClearCollectionPharmacySearchEvent
+    extends CollectionPharmaciesEvent {
+  const ClearCollectionPharmacySearchEvent();
 }

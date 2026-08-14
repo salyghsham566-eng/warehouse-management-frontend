@@ -11,7 +11,7 @@ class CollectionPharmacyDetailsPage extends StatelessWidget {
   });
 
   final CollectionPharmacyModel pharmacy;
-  final VoidCallback onRecordPayment;
+  final VoidCallback? onRecordPayment;
   final VoidCallback onOpenHistory;
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:project_2/Features/auth/bloc/collection_pharmacies_filter.dart';
 
-enum CollectionPharmacyFilter { all, hasDebt, paid, pendingPayments }
+//enum CollectionPharmacyFilter { all, hasDebt, paid, pendingPayments, pendingCollection }
 
 class CollectionPharmaciesFilterScreen extends StatefulWidget {
   const CollectionPharmaciesFilterScreen({super.key});
@@ -73,7 +74,7 @@ class _CollectionPharmaciesFilterScreenState
         }).toList();
         break;
 
-      case CollectionPharmacyFilter.paid:
+      case CollectionPharmacyFilter.settled:
         result = result.where((pharmacy) {
           final dueAmount = _asDouble(pharmacy["dueAmount"]);
           final hasPendingPayment = pharmacy["hasPendingPayment"] == true;
@@ -82,7 +83,7 @@ class _CollectionPharmaciesFilterScreenState
         }).toList();
         break;
 
-      case CollectionPharmacyFilter.pendingPayments:
+      case CollectionPharmacyFilter.pendingCollection:
         result = result.where((pharmacy) {
           return pharmacy["hasPendingPayment"] == true;
         }).toList();
@@ -245,11 +246,11 @@ class _CollectionPharmaciesFilterScreenState
           ),
           _buildFilterChip(
             title: "المسددة",
-            filter: CollectionPharmacyFilter.paid,
+            filter: CollectionPharmacyFilter.settled,
           ),
           _buildFilterChip(
             title: "دفعات معلقة",
-            filter: CollectionPharmacyFilter.pendingPayments,
+            filter: CollectionPharmacyFilter.pendingCollection,
           ),
         ],
       ),

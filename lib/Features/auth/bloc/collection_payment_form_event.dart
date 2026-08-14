@@ -1,24 +1,31 @@
 import 'package:equatable/equatable.dart';
 import 'package:project_2/Features/auth/data/models/collection_payment_model.dart';
 
-abstract class CollectionPaymentFormEvent extends Equatable {
+abstract class CollectionPaymentFormEvent
+    extends Equatable {
   const CollectionPaymentFormEvent();
 
   @override
-  List<Object?> get props => const [];
+  List<Object?> get props => [];
 }
 
-class CollectionPaymentAmountChanged extends CollectionPaymentFormEvent {
-  const CollectionPaymentAmountChanged(this.amount);
+class CollectionPaymentAmountChanged
+    extends CollectionPaymentFormEvent {
+  const CollectionPaymentAmountChanged(
+    this.value,
+  );
 
-  final String amount;
+  final String value;
 
   @override
-  List<Object?> get props => [amount];
+  List<Object?> get props => [value];
 }
 
-class CollectionPaymentDateChanged extends CollectionPaymentFormEvent {
-  const CollectionPaymentDateChanged(this.date);
+class CollectionPaymentDateChanged
+    extends CollectionPaymentFormEvent {
+  const CollectionPaymentDateChanged(
+    this.date,
+  );
 
   final DateTime date;
 
@@ -26,8 +33,11 @@ class CollectionPaymentDateChanged extends CollectionPaymentFormEvent {
   List<Object?> get props => [date];
 }
 
-class CollectionPaymentMethodChanged extends CollectionPaymentFormEvent {
-  const CollectionPaymentMethodChanged(this.method);
+class CollectionPaymentMethodChanged
+    extends CollectionPaymentFormEvent {
+  const CollectionPaymentMethodChanged(
+    this.method,
+  );
 
   final CollectionPaymentMethod method;
 
@@ -35,8 +45,11 @@ class CollectionPaymentMethodChanged extends CollectionPaymentFormEvent {
   List<Object?> get props => [method];
 }
 
-class CollectionPaymentNotesChanged extends CollectionPaymentFormEvent {
-  const CollectionPaymentNotesChanged(this.notes);
+class CollectionPaymentNotesChanged
+    extends CollectionPaymentFormEvent {
+  const CollectionPaymentNotesChanged(
+    this.notes,
+  );
 
   final String notes;
 
@@ -44,8 +57,11 @@ class CollectionPaymentNotesChanged extends CollectionPaymentFormEvent {
   List<Object?> get props => [notes];
 }
 
-class CollectionPaymentReceiptChanged extends CollectionPaymentFormEvent {
-  const CollectionPaymentReceiptChanged(this.imagePath);
+class CollectionPaymentReceiptChanged
+    extends CollectionPaymentFormEvent {
+  const CollectionPaymentReceiptChanged(
+    this.imagePath,
+  );
 
   final String imagePath;
 
@@ -53,10 +69,12 @@ class CollectionPaymentReceiptChanged extends CollectionPaymentFormEvent {
   List<Object?> get props => [imagePath];
 }
 
-class CollectionPaymentReceiptRemoved extends CollectionPaymentFormEvent {
+class CollectionPaymentReceiptRemoved
+    extends CollectionPaymentFormEvent {
   const CollectionPaymentReceiptRemoved();
 }
 
-class CollectionPaymentSubmitted extends CollectionPaymentFormEvent {
+class CollectionPaymentSubmitted
+    extends CollectionPaymentFormEvent {
   const CollectionPaymentSubmitted();
 }

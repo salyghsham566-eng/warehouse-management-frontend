@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_2/Features/auth/bloc/login_bloc.dart';
@@ -246,26 +247,24 @@ class _RepresentativeLoginScreenState extends State<RepresentativeLoginScreen> {
                                   const SizedBox(height: 18),
 
                                   BlocConsumer<LoginBloc, LoginState>(
-                                    listener: (context, state) {
-                                      if (state is LoginSuccess) {
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => const HomeScreen2(),
-                                          ),
-                                        );
-                                      }
+                                   listener: (context, state) {
+  if (state is LoginSuccess) {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => const HomeScreen2(),
+      ),
+      (route) => false,
+    );
+  }
 
-                                      if (state is LoginFailure) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(state.message),
-                                          ),
-                                        );
-                                      }
-                                    },
+  if (state is LoginFailure) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(state.message),
+      ),
+    );
+  }
+},
                                     builder: (context, state) {
                                       return SizedBox(
                                         width: double.infinity,

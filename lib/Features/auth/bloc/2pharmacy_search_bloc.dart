@@ -1,101 +1,264 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_2/Features/auth/bloc/2pharmacy_search_event.dart';
 import 'package:project_2/Features/auth/bloc/2pharmacy_search_state.dart';
+import 'package:project_2/Features/auth/bloc/collection_pharmacies_filter.dart';
 import 'package:project_2/Features/auth/data/models/2pharmacy_model.dart';
-import 'package:project_2/Features/auth/domain/repositories/2pharmacy_repository.dart';
+import 'package:project_2/Features/auth/domain/repositories/collection_phermacy_repository.dart';
 
-class PharmacySearchBloc
-    extends Bloc<PharmacySearchEvent, PharmacySearchState> {
-  PharmacySearchBloc(this._repository) : super(const PharmacySearchState()) {
-    on<PharmacySearchRequested>(_onSearchRequested);
 
-    on<PharmacySearchQueryChanged>(_onQueryChanged);
-  }
-
-  final CollectionPharmacyRepository _repository;
-
-  Future<void> _onSearchRequested(
-    PharmacySearchRequested event,
-    Emitter<PharmacySearchState> emit,
-  ) async {
-    emit(
-      state.copyWith(
-        status: PharmacySearchStatus.loading,
-        clearErrorMessage: true,
-      ),
+class CollectionPharmaciesBloc extends Bloc<
+    CollectionPharmaciesEvent,
+    CollectionPharmaciesState> {
+  CollectionPharmaciesBloc({
+    required this.repository,
+  }) : super(
+          const CollectionPharmaciesInitial(),
+        ) {
+    on<LoadCollectionPharmaciesEvent>(
+      _onLoadCollectionPharmacies,
     );
 
-    try {
-      final List<CollectionPharmacyModel> pharmacies = await _repository
-          .getPharmacies();
+    on<RefreshCollectionPharmaciesEvent>(
+      _onRefreshCollectionPharmacies,
+    );
 
-      final List<CollectionPharmacyModel> visiblePharmacies = _filterPharmacies(
+    on<SearchCollectionPharmaciesEvent>(
+      _onSearchCollectionPharmacies,
+    );
+
+    on<ChangeCollectionPharmacyFilterEvent>(
+      _onChangeFilter,
+    );
+
+    on<ClearCollectionPharmacySearchEvent>(
+      _onClearSearch,
+    );
+  }
+
+  final CollectionRepository repository;
+
+  Future<void> _onLoadCollectionPharmacies(
+    LoadCollectionPharmaciesEvent event,
+    Emitter<CollectionPharmaciesState> emit,
+  ) async {
+    emit(const CollectionPharmaciesLoading());
+
+    try {
+      final pharmacies =
+    await repository.getCollectionPharmacies();
+
+final visiblePharmacies = _applyFilters(
+  pharmacies: pharmacies,
+  filter: CollectionPharmacyFilter.hasDebt,
+  searchText: '',
+);
+
+emit(
+  CollectionPharmaciesLoaded(
+    allPharmacies: pharmacies,
+    visiblePharmacies: visiblePharmacies,
+    selectedFilter:
+        CollectionPharmacyFilter.hasDebt,
+    searchText: '',
+  ),
+);
+    } catch (error) {
+      emit(
+        CollectionPharmaciesFailure(
+          message: _cleanErrorMessage(error),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onRefreshCollectionPharmacies(
+    RefreshCollectionPharmaciesEvent event,
+    Emitter<CollectionPharmaciesState> emit,
+  ) async {
+    final currentState = state;
+
+    CollectionPharmacyFilter currentFilter =
+        CollectionPharmacyFilter.hasDebt;
+
+    String currentSearchText = '';
+
+    if (currentState
+        is CollectionPharmaciesLoaded) {
+      currentFilter =
+          currentState.selectedFilter;
+      currentSearchText =
+          currentState.searchText;
+    }
+
+    try {
+      final pharmacies =
+          await repository.getCollectionPharmacies();
+
+      final visiblePharmacies = _applyFilters(
         pharmacies: pharmacies,
-        query: state.query,
+        filter: currentFilter,
+        searchText: currentSearchText,
       );
 
       emit(
-        state.copyWith(
-          status: PharmacySearchStatus.success,
+        CollectionPharmaciesLoaded(
           allPharmacies: pharmacies,
-          visiblePharmacies: visiblePharmacies,
-          clearErrorMessage: true,
+          visiblePharmacies:
+              visiblePharmacies,
+          selectedFilter: currentFilter,
+          searchText: currentSearchText,
         ),
       );
     } catch (error) {
       emit(
-        state.copyWith(
-          status: PharmacySearchStatus.failure,
-          errorMessage: 'تعذر تحميل قائمة الصيدليات',
+        CollectionPharmaciesFailure(
+          message: _cleanErrorMessage(error),
         ),
       );
     }
   }
 
-  void _onQueryChanged(
-    PharmacySearchQueryChanged event,
-    Emitter<PharmacySearchState> emit,
+  void _onSearchCollectionPharmacies(
+    SearchCollectionPharmaciesEvent event,
+    Emitter<CollectionPharmaciesState> emit,
   ) {
-    final List<CollectionPharmacyModel> filteredPharmacies = _filterPharmacies(
-      pharmacies: state.allPharmacies,
-      query: event.query,
+    final currentState = state;
+
+    if (currentState
+        is! CollectionPharmaciesLoaded) {
+      return;
+    }
+
+    final searchText = event.searchText.trim();
+
+    final visiblePharmacies = _applyFilters(
+      pharmacies: currentState.allPharmacies,
+      filter: currentState.selectedFilter,
+      searchText: searchText,
     );
 
     emit(
-      state.copyWith(query: event.query, visiblePharmacies: filteredPharmacies),
+      currentState.copyWith(
+        searchText: searchText,
+        visiblePharmacies:
+            visiblePharmacies,
+      ),
     );
   }
 
-  List<CollectionPharmacyModel> _filterPharmacies({
-    required List<CollectionPharmacyModel> pharmacies,
-    required String query,
-  }) {
-    final String normalizedQuery = _normalizeText(query);
+  void _onChangeFilter(
+    ChangeCollectionPharmacyFilterEvent event,
+    Emitter<CollectionPharmaciesState> emit,
+  ) {
+    final currentState = state;
 
-    if (normalizedQuery.isEmpty) {
-      return pharmacies;
+    if (currentState
+        is! CollectionPharmaciesLoaded) {
+      return;
     }
 
-    return pharmacies
-        .where((CollectionPharmacyModel pharmacy) {
-          final String name = _normalizeText(pharmacy.name);
+    final visiblePharmacies = _applyFilters(
+      pharmacies: currentState.allPharmacies,
+      filter: event.filter,
+      searchText: currentState.searchText,
+    );
 
-          final String area = _normalizeText(pharmacy.area);
-
-          final String address = _normalizeText(pharmacy.address);
-
-          return name.contains(normalizedQuery) ||
-              area.contains(normalizedQuery) ||
-              address.contains(normalizedQuery);
-        })
-        .toList(growable: false);
+    emit(
+      currentState.copyWith(
+        selectedFilter: event.filter,
+        visiblePharmacies:
+            visiblePharmacies,
+      ),
+    );
   }
 
-  String _normalizeText(String value) {
-    return value
-        .trim()
-        .toLowerCase()
-        .replaceAll('ـ', '')
-        .replaceAll(RegExp(r'\s+'), ' ');
+  void _onClearSearch(
+    ClearCollectionPharmacySearchEvent event,
+    Emitter<CollectionPharmaciesState> emit,
+  ) {
+    final currentState = state;
+
+    if (currentState
+        is! CollectionPharmaciesLoaded) {
+      return;
+    }
+
+    final visiblePharmacies = _applyFilters(
+      pharmacies: currentState.allPharmacies,
+      filter: currentState.selectedFilter,
+      searchText: '',
+    );
+
+    emit(
+      currentState.copyWith(
+        searchText: '',
+        visiblePharmacies:
+            visiblePharmacies,
+      ),
+    );
+  }
+
+  List<CollectionPharmacyModel> _applyFilters({
+    required List<CollectionPharmacyModel>
+        pharmacies,
+    required CollectionPharmacyFilter filter,
+    required String searchText,
+  }) {
+    final normalizedSearchText =
+        searchText.trim().toLowerCase();
+
+    Iterable<CollectionPharmacyModel> result =
+        pharmacies;
+
+    if (normalizedSearchText.isNotEmpty) {
+      result = result.where((pharmacy) {
+        final searchableText = [
+          pharmacy.name,
+          pharmacy.area,
+          pharmacy.address,
+          pharmacy.phoneNumber ?? '',
+        ].join(' ').toLowerCase();
+
+        return searchableText.contains(
+          normalizedSearchText,
+        );
+      });
+    }
+
+    switch (filter) {
+      case CollectionPharmacyFilter.hasDebt:
+        result = result.where(
+          (pharmacy) =>
+              pharmacy.accountStatus ==
+              PharmacyAccountStatus.hasDebt,
+        );
+        break;
+
+      case CollectionPharmacyFilter.settled:
+        result = result.where(
+          (pharmacy) => pharmacy.isSettled,
+        );
+        break;
+
+      case CollectionPharmacyFilter
+            .pendingCollection:
+        result = result.where(
+          (pharmacy) =>
+              pharmacy.isPendingCollection,
+        );
+        break;
+
+      case CollectionPharmacyFilter.all:
+        break;
+    }
+
+    return result.toList();
+  }
+
+  String _cleanErrorMessage(Object error) {
+    return error
+        .toString()
+        .replaceFirst('Exception: ', '')
+        .trim();
   }
 }

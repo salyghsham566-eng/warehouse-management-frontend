@@ -1,68 +1,153 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:project_2/Core/di/injection_container.dart';
 import 'package:project_2/Core/theme/app_colors.dart';
-import 'package:project_2/Features/auth/bloc/collection_dashboard_bloc.dart';
-import 'package:project_2/Features/auth/bloc/collection_dashboard_event.dart';
-import 'package:project_2/Features/auth/bloc/collection_dashboard_state.dart';
-import 'package:project_2/Features/auth/data/models/Collection_modle.dart';
+
+import 'package:project_2/Features/auth/bloc/collection_payments_history_bloc.dart';
+import 'package:project_2/Features/auth/bloc/collection_payments_history_event.dart';
+import 'package:project_2/Features/auth/bloc/collection_payments_history_state.dart';
+
+import 'package:project_2/Features/auth/data/models/collection_payment_model.dart';
+
+import 'package:project_2/Features/auth/presentation/collection_payment_details_page.dart';
 
 class CollectionDashboardPage extends StatelessWidget {
   const CollectionDashboardPage({
     required this.onRecordPayment,
     required this.onOpenHistory,
-    required this.onOpenPaymentDetails,
     super.key,
   });
 
-  final VoidCallback onRecordPayment;
-  final VoidCallback onOpenHistory;
-  final ValueChanged<String> onOpenPaymentDetails;
+  final Future<void> Function() onRecordPayment;
+  final Future<void> Function() onOpenHistory;
+
+  Future<void> _openPageAndReload(
+    BuildContext context,
+    Future<void> Function() openPage,
+  ) async {
+    await openPage();
+
+    if (!context.mounted) {
+      return;
+    }
+
+    context.read<CollectionPaymentsHistoryBloc>().add(
+          const CollectionPaymentsHistoryRequested(),
+        );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: BlocBuilder<CollectionDashboardBloc, CollectionDashboardState>(
-          builder: (context, state) {
-            switch (state.loadStatus) {
-              case CollectionLoadStatus.initial:
-              case CollectionLoadStatus.loading:
-                return const _LoadingView();
+    return BlocProvider<CollectionPaymentsHistoryBloc>(
+      create: (_) => sl<CollectionPaymentsHistoryBloc>()
+        ..add(
+          const CollectionPaymentsHistoryRequested(),
+        ),
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
+            child: BlocBuilder<
+                CollectionPaymentsHistoryBloc,
+                CollectionPaymentsHistoryState>(
+              builder: (context, state) {
+                switch (state.status) {
+                  case CollectionPaymentsHistoryStatus.initial:
+                  case CollectionPaymentsHistoryStatus.loading:
+                    return const _LoadingView();
 
-              case CollectionLoadStatus.failure:
-                return _FailureView(
-                  message: state.errorMessage ?? 'حدث خطأ غير متوقع',
-                  onRetry: () {
-                    context.read<CollectionDashboardBloc>().add(
-                      const CollectionDashboardRequested(),
+                  case CollectionPaymentsHistoryStatus.failure:
+                    return _FailureView(
+                      message:
+                          state.errorMessage ?? 'حدث خطأ أثناء تحميل التحصيلات',
+                      onRetry: () {
+                        context.read<CollectionPaymentsHistoryBloc>().add(
+                              const CollectionPaymentsHistoryRequested(),
+                            );
+                      },
                     );
-                  },
-                );
 
-              case CollectionLoadStatus.success:
-                final dashboard = state.dashboard;
+                  case CollectionPaymentsHistoryStatus.success:
+                    final List<CollectionPaymentModel> allPayments =
+                        List<CollectionPaymentModel>.from(
+                      state.allPayments,
+                    )..sort(
+                            (first, second) => second.paymentDate.compareTo(
+                              first.paymentDate,
+                            ),
+                          );
 
-                if (dashboard == null) {
-                  return _FailureView(
-                    message: 'لا توجد بيانات متاحة',
-                    onRetry: () {
-                      context.read<CollectionDashboardBloc>().add(
-                        const CollectionDashboardRequested(),
-                      );
-                    },
-                  );
+                    // أحدث خمس عمليات فقط.
+                    final List<CollectionPaymentModel> recentPayments =
+                        allPayments.take(5).toList(growable: false);
+
+                    final int approvedCount = allPayments
+                        .where(
+                          (payment) =>
+                              payment.status ==
+                              CollectionApprovalStatus.approved,
+                        )
+                        .length;
+
+                    final int pendingCount = allPayments
+                        .where(
+                          (payment) =>
+                              payment.status ==
+                              CollectionApprovalStatus
+                                  .pendingBillingApproval,
+                        )
+                        .length;
+
+                    final int rejectedCount = allPayments
+                        .where(
+                          (payment) =>
+                              payment.status ==
+                              CollectionApprovalStatus.rejected,
+                        )
+                        .length;
+
+                    final DateTime today = DateTime.now();
+
+                    final double totalToday = allPayments
+                        .where(
+                          (payment) =>
+                              DateUtils.isSameDay(
+                                payment.paymentDate,
+                                today,
+                              ) &&
+                              payment.status !=
+                                  CollectionApprovalStatus.rejected,
+                        )
+                        .fold<double>(
+                          0,
+                          (total, payment) => total + payment.amount,
+                        );
+
+                    return _DashboardContent(
+                      totalToday: totalToday,
+                      approvedCount: approvedCount,
+                      pendingCount: pendingCount,
+                      rejectedCount: rejectedCount,
+                      recentPayments: recentPayments,
+                      onRecordPayment: () {
+                        _openPageAndReload(
+                          context,
+                          onRecordPayment,
+                        );
+                      },
+                      onOpenHistory: () {
+                        _openPageAndReload(
+                          context,
+                          onOpenHistory,
+                        );
+                      },
+                    );
                 }
-
-                return _DashboardContent(
-                  state: state,
-                  dashboard: dashboard,
-                  onRecordPayment: onRecordPayment,
-                  onOpenHistory: onOpenHistory,
-                  onOpenPaymentDetails: onOpenPaymentDetails,
-                );
-            }
-          },
+              },
+            ),
+          ),
         ),
       ),
     );
@@ -71,38 +156,51 @@ class CollectionDashboardPage extends StatelessWidget {
 
 class _DashboardContent extends StatelessWidget {
   const _DashboardContent({
-    required this.state,
-    required this.dashboard,
+    required this.totalToday,
+    required this.approvedCount,
+    required this.pendingCount,
+    required this.rejectedCount,
+    required this.recentPayments,
     required this.onRecordPayment,
     required this.onOpenHistory,
-    required this.onOpenPaymentDetails,
   });
 
-  final CollectionDashboardState state;
-  final CollectionDashboardModel dashboard;
+  final double totalToday;
+
+  final int approvedCount;
+  final int pendingCount;
+  final int rejectedCount;
+
+  final List<CollectionPaymentModel> recentPayments;
 
   final VoidCallback onRecordPayment;
   final VoidCallback onOpenHistory;
-  final ValueChanged<String> onOpenPaymentDetails;
 
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
       color: AppColors.primary,
       onRefresh: () async {
-        final bloc = context.read<CollectionDashboardBloc>();
+        final CollectionPaymentsHistoryBloc bloc =
+            context.read<CollectionPaymentsHistoryBloc>();
 
-        bloc.add(const CollectionDashboardRequested());
+        bloc.add(
+          const CollectionPaymentsHistoryRequested(),
+        );
 
         await bloc.stream.firstWhere(
-          (state) =>
-              state.loadStatus == CollectionLoadStatus.success ||
-              state.loadStatus == CollectionLoadStatus.failure,
+          (newState) =>
+              newState.status != CollectionPaymentsHistoryStatus.loading,
         );
       },
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
+        padding: const EdgeInsets.fromLTRB(
+          20,
+          18,
+          20,
+          30,
+        ),
         children: [
           const Text(
             'التحصيل',
@@ -113,7 +211,9 @@ class _DashboardContent extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
+
           const SizedBox(height: 7),
+
           const Text(
             'متابعة وتسجيل الدفعات النقدية اليومية',
             style: TextStyle(
@@ -122,6 +222,7 @@ class _DashboardContent extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
+
           const SizedBox(height: 20),
 
           _MainButton(
@@ -143,8 +244,7 @@ class _DashboardContent extends StatelessWidget {
           const SizedBox(height: 22),
 
           _TotalCollectionCard(
-            total: dashboard.totalToday,
-            growthPercent: dashboard.growthPercent,
+            total: totalToday,
           ),
 
           const SizedBox(height: 13),
@@ -153,7 +253,7 @@ class _DashboardContent extends StatelessWidget {
             children: [
               Expanded(
                 child: _CollectionStatCard(
-                  count: dashboard.approvedCount,
+                  count: approvedCount,
                   title: 'التحصيلات المعتمدة',
                   icon: Icons.check_circle_outline,
                   color: AppColors.success,
@@ -163,7 +263,7 @@ class _DashboardContent extends StatelessWidget {
               const SizedBox(width: 11),
               Expanded(
                 child: _CollectionStatCard(
-                  count: dashboard.pendingCount,
+                  count: pendingCount,
                   title: 'بانتظار الاعتماد',
                   icon: Icons.hourglass_empty,
                   color: AppColors.warning,
@@ -179,7 +279,7 @@ class _DashboardContent extends StatelessWidget {
             children: [
               Expanded(
                 child: _CollectionStatCard(
-                  count: dashboard.rejectedCount,
+                  count: rejectedCount,
                   title: 'التحصيلات المرفوضة',
                   icon: Icons.cancel_outlined,
                   color: AppColors.danger,
@@ -187,15 +287,13 @@ class _DashboardContent extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 11),
-              const Expanded(child: SizedBox()),
+              const Expanded(
+                child: SizedBox(),
+              ),
             ],
           ),
 
           const SizedBox(height: 22),
-
-          _SearchAndFilterSection(state: state),
-
-          const SizedBox(height: 20),
 
           Row(
             children: [
@@ -224,173 +322,36 @@ class _DashboardContent extends StatelessWidget {
 
           const SizedBox(height: 4),
 
-          if (state.visibleCollections.isEmpty)
+          if (recentPayments.isEmpty)
             const _EmptyView()
           else
-            ...state.visibleCollections.map(
-              (collection) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _RecentCollectionTile(
-                  item: collection,
-                  onTap: () => onOpenPaymentDetails(collection.id),
-                ),
-              ),
+            ...recentPayments.map(
+              (payment) {
+                return Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: 10,
+                  ),
+                  child: _RecentCollectionTile(
+                    item: payment,
+                    onTap: () {
+                     /* Navigator.of(context).push<void>(
+                        MaterialPageRoute<void>(
+                          builder: (_) {
+                            return CollectionPaymentFormPage(
+                             initialPayment: payment,
+                            );
+                          },
+                        ),
+                      );*/
+                    },
+                  ),
+                );
+              },
             ),
         ],
       ),
     );
   }
-}
-
-class _SearchAndFilterSection extends StatelessWidget {
-  const _SearchAndFilterSection({required this.state});
-
-  final CollectionDashboardState state;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            textInputAction: TextInputAction.search,
-            onChanged: (value) {
-              context.read<CollectionDashboardBloc>().add(
-                CollectionSearchChanged(value),
-              );
-            },
-            decoration: InputDecoration(
-              hintText: 'ابحث باسم الصيدلية أو المنطقة',
-              hintStyle: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
-              prefixIcon: const Icon(
-                Icons.search,
-                color: AppColors.textSecondary,
-              ),
-              filled: true,
-              fillColor: AppColors.surface,
-              contentPadding: const EdgeInsets.symmetric(vertical: 13),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: AppColors.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(
-                  color: AppColors.primary,
-                  width: 1.3,
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Material(
-          color: state.statusFilter == CollectionStatusFilter.all
-              ? AppColors.surface
-              : AppColors.primarySoft,
-          borderRadius: BorderRadius.circular(14),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: () async {
-              final selectedFilter = await _showFilterSheet(
-                context,
-                currentFilter: state.statusFilter,
-              );
-
-              if (!context.mounted || selectedFilter == null) {
-                return;
-              }
-
-              context.read<CollectionDashboardBloc>().add(
-                CollectionStatusFilterChanged(selectedFilter),
-              );
-            },
-            child: Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: const Icon(Icons.tune, color: AppColors.primary),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-Future<CollectionStatusFilter?> _showFilterSheet(
-  BuildContext context, {
-  required CollectionStatusFilter currentFilter,
-}) {
-  return showModalBottomSheet<CollectionStatusFilter>(
-    context: context,
-    useSafeArea: true,
-    backgroundColor: Colors.transparent,
-    builder: (sheetContext) {
-      return Container(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 45,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'فلترة التحصيلات',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 10),
-            ...CollectionStatusFilter.values.map((filter) {
-              final isSelected = filter == currentFilter;
-
-              return ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  filter.label,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                  ),
-                ),
-                trailing: Icon(
-                  isSelected ? Icons.check_circle : Icons.circle_outlined,
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.textSecondary,
-                ),
-                onTap: () {
-                  Navigator.of(sheetContext).pop(filter);
-                },
-              );
-            }),
-          ],
-        ),
-      );
-    },
-  );
 }
 
 class _MainButton extends StatelessWidget {
@@ -414,7 +375,10 @@ class _MainButton extends StatelessWidget {
       child: filled
           ? FilledButton.icon(
               onPressed: onPressed,
-              icon: Icon(icon, size: 20),
+              icon: Icon(
+                icon,
+                size: 20,
+              ),
               label: Text(label),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -430,11 +394,16 @@ class _MainButton extends StatelessWidget {
             )
           : OutlinedButton.icon(
               onPressed: onPressed,
-              icon: Icon(icon, size: 20),
+              icon: Icon(
+                icon,
+                size: 20,
+              ),
               label: Text(label),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.primary),
+                side: const BorderSide(
+                  color: AppColors.primary,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -451,11 +420,9 @@ class _MainButton extends StatelessWidget {
 class _TotalCollectionCard extends StatelessWidget {
   const _TotalCollectionCard({
     required this.total,
-    required this.growthPercent,
   });
 
   final double total;
-  final double growthPercent;
 
   @override
   Widget build(BuildContext context) {
@@ -465,7 +432,10 @@ class _TotalCollectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.success, width: 1.2),
+        border: Border.all(
+          color: AppColors.success,
+          width: 1.2,
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0D000000),
@@ -485,53 +455,31 @@ class _TotalCollectionCard extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
+
           const SizedBox(height: 11),
-          Row(
-            children: [
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: _formatAmount(total),
-                        style: const TextStyle(
-                          color: AppColors.success,
-                          fontSize: 27,
-                          height: 1,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const TextSpan(
-                        text: ' ر.س',
-                        style: TextStyle(
-                          color: AppColors.success,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.successSoft,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Text(
-                  '↑ ${growthPercent.toStringAsFixed(0)}%',
+
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: _formatAmount(total),
                   style: const TextStyle(
                     color: AppColors.success,
-                    fontSize: 12,
+                    fontSize: 27,
+                    height: 1,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const TextSpan(
+                  text: ' ر.س',
+                  style: TextStyle(
+                    color: AppColors.success,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -557,12 +505,16 @@ class _CollectionStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 125),
+      constraints: const BoxConstraints(
+        minHeight: 125,
+      ),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.7)),
+        border: Border.all(
+          color: color.withOpacity(0.7),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -586,11 +538,17 @@ class _CollectionStatCard extends StatelessWidget {
                   color: softColor,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 18, color: color),
+                child: Icon(
+                  icon,
+                  size: 18,
+                  color: color,
+                ),
               ),
             ],
           ),
+
           const SizedBox(height: 18),
+
           Text(
             title,
             maxLines: 2,
@@ -609,16 +567,23 @@ class _CollectionStatCard extends StatelessWidget {
 }
 
 class _RecentCollectionTile extends StatelessWidget {
-  const _RecentCollectionTile({required this.item, required this.onTap});
+  const _RecentCollectionTile({
+    required this.item,
+    required this.onTap,
+  });
 
-  final CollectionItemModel item;
+  final CollectionPaymentModel item;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = _getStatusColor(item.status);
+    final Color statusColor = _getStatusColor(
+      item.status,
+    );
 
-    final statusBackground = _getStatusBackground(item.status);
+    final Color statusBackground = _getStatusBackground(
+      item.status,
+    );
 
     return Material(
       color: AppColors.surface,
@@ -627,10 +592,13 @@ class _RecentCollectionTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         onTap: onTap,
         child: Container(
+          width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(
+              color: AppColors.border,
+            ),
           ),
           child: Row(
             children: [
@@ -647,7 +615,9 @@ class _RecentCollectionTile extends StatelessWidget {
                   size: 21,
                 ),
               ),
+
               const SizedBox(width: 12),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -662,9 +632,12 @@ class _RecentCollectionTile extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+
                     const SizedBox(height: 5),
+
                     Text(
-                      '${item.areaName} • ${_formatDate(item.date)}',
+                      '${item.paymentMethod.label} • '
+                      '${_formatDate(item.paymentDate)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -675,7 +648,9 @@ class _RecentCollectionTile extends StatelessWidget {
                   ],
                 ),
               ),
+
               const SizedBox(width: 10),
+
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -687,7 +662,9 @@ class _RecentCollectionTile extends StatelessWidget {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
+
                   const SizedBox(height: 7),
+
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -722,13 +699,18 @@ class _LoadingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: CircularProgressIndicator(color: AppColors.primary),
+      child: CircularProgressIndicator(
+        color: AppColors.primary,
+      ),
     );
   }
 }
 
 class _FailureView extends StatelessWidget {
-  const _FailureView({required this.message, required this.onRetry});
+  const _FailureView({
+    required this.message,
+    required this.onRetry,
+  });
 
   final String message;
   final VoidCallback onRetry;
@@ -741,8 +723,14 @@ class _FailureView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, color: AppColors.danger, size: 55),
+            const Icon(
+              Icons.error_outline,
+              color: AppColors.danger,
+              size: 55,
+            ),
+
             const SizedBox(height: 14),
+
             Text(
               message,
               textAlign: TextAlign.center,
@@ -751,11 +739,17 @@ class _FailureView extends StatelessWidget {
                 fontSize: 15,
               ),
             ),
+
             const SizedBox(height: 18),
+
             FilledButton(
               onPressed: onRetry,
-              style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text('إعادة المحاولة'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: const Text(
+                'إعادة المحاولة',
+              ),
             ),
           ],
         ),
@@ -775,16 +769,25 @@ class _EmptyView extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: AppColors.border,
+        ),
       ),
       child: const Column(
         children: [
-          Icon(Icons.search_off, color: AppColors.textSecondary, size: 42),
+          Icon(
+            Icons.receipt_long_outlined,
+            color: AppColors.textSecondary,
+            size: 42,
+          ),
           SizedBox(height: 10),
           Text(
-            'لا توجد عمليات مطابقة للبحث أو الفلتر',
+            'لا توجد عمليات تحصيل حتى الآن',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
           ),
         ],
       ),
@@ -792,37 +795,41 @@ class _EmptyView extends StatelessWidget {
   }
 }
 
-Color _getStatusColor(CollectionPaymentStatus status) {
+Color _getStatusColor(
+  CollectionApprovalStatus status,
+) {
   switch (status) {
-    case CollectionPaymentStatus.approved:
+    case CollectionApprovalStatus.approved:
       return AppColors.success;
 
-    case CollectionPaymentStatus.pending:
+    case CollectionApprovalStatus.pendingBillingApproval:
       return AppColors.warning;
 
-    case CollectionPaymentStatus.rejected:
+    case CollectionApprovalStatus.rejected:
       return AppColors.danger;
   }
 }
 
-Color _getStatusBackground(CollectionPaymentStatus status) {
+Color _getStatusBackground(
+  CollectionApprovalStatus status,
+) {
   switch (status) {
-    case CollectionPaymentStatus.approved:
+    case CollectionApprovalStatus.approved:
       return AppColors.successSoft;
 
-    case CollectionPaymentStatus.pending:
+    case CollectionApprovalStatus.pendingBillingApproval:
       return AppColors.warningSoft;
 
-    case CollectionPaymentStatus.rejected:
+    case CollectionApprovalStatus.rejected:
       return AppColors.dangerSoft;
   }
 }
 
 String _formatAmount(double amount) {
-  final value = amount.toStringAsFixed(0);
-  final result = StringBuffer();
+  final String value = amount.toStringAsFixed(0);
+  final StringBuffer result = StringBuffer();
 
-  for (var index = 0; index < value.length; index++) {
+  for (int index = 0; index < value.length; index++) {
     if (index > 0 && (value.length - index) % 3 == 0) {
       result.write(',');
     }
@@ -834,11 +841,17 @@ String _formatAmount(double amount) {
 }
 
 String _formatDate(DateTime date) {
-  final localDate = date.toLocal();
+  final DateTime localDate = date.toLocal();
 
-  final day = localDate.day.toString().padLeft(2, '0');
+  final String day = localDate.day.toString().padLeft(
+        2,
+        '0',
+      );
 
-  final month = localDate.month.toString().padLeft(2, '0');
+  final String month = localDate.month.toString().padLeft(
+        2,
+        '0',
+      );
 
   return '$day/$month/${localDate.year}';
 }

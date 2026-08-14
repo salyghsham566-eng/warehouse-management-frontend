@@ -1,51 +1,80 @@
 import 'package:equatable/equatable.dart';
+import 'package:project_2/Features/auth/bloc/collection_pharmacies_filter.dart';
 import 'package:project_2/Features/auth/data/models/2pharmacy_model.dart';
 
-enum PharmacySearchStatus { initial, loading, success, failure }
+abstract class CollectionPharmaciesState
+    extends Equatable {
+  const CollectionPharmaciesState();
 
-class PharmacySearchState extends Equatable {
-  const PharmacySearchState({
-    this.status = PharmacySearchStatus.initial,
-    this.allPharmacies = const <CollectionPharmacyModel>[],
-    this.visiblePharmacies = const <CollectionPharmacyModel>[],
-    this.query = '',
-    this.errorMessage,
+  @override
+  List<Object?> get props => [];
+}
+
+class CollectionPharmaciesInitial
+    extends CollectionPharmaciesState {
+  const CollectionPharmaciesInitial();
+}
+
+class CollectionPharmaciesLoading
+    extends CollectionPharmaciesState {
+  const CollectionPharmaciesLoading();
+}
+
+class CollectionPharmaciesLoaded
+    extends CollectionPharmaciesState {
+  const CollectionPharmaciesLoaded({
+    required this.allPharmacies,
+    required this.visiblePharmacies,
+    required this.selectedFilter,
+    required this.searchText,
   });
 
-  final PharmacySearchStatus status;
+  final List<CollectionPharmacyModel>
+      allPharmacies;
 
-  final List<CollectionPharmacyModel> allPharmacies;
+  final List<CollectionPharmacyModel>
+      visiblePharmacies;
 
-  final List<CollectionPharmacyModel> visiblePharmacies;
+  final CollectionPharmacyFilter selectedFilter;
 
-  final String query;
-  final String? errorMessage;
+  final String searchText;
 
-  PharmacySearchState copyWith({
-    PharmacySearchStatus? status,
+  CollectionPharmaciesLoaded copyWith({
     List<CollectionPharmacyModel>? allPharmacies,
-    List<CollectionPharmacyModel>? visiblePharmacies,
-    String? query,
-    String? errorMessage,
-    bool clearErrorMessage = false,
+    List<CollectionPharmacyModel>?
+        visiblePharmacies,
+    CollectionPharmacyFilter? selectedFilter,
+    String? searchText,
   }) {
-    return PharmacySearchState(
-      status: status ?? this.status,
-      allPharmacies: allPharmacies ?? this.allPharmacies,
-      visiblePharmacies: visiblePharmacies ?? this.visiblePharmacies,
-      query: query ?? this.query,
-      errorMessage: clearErrorMessage
-          ? null
-          : errorMessage ?? this.errorMessage,
+    return CollectionPharmaciesLoaded(
+      allPharmacies:
+          allPharmacies ?? this.allPharmacies,
+      visiblePharmacies:
+          visiblePharmacies ??
+          this.visiblePharmacies,
+      selectedFilter:
+          selectedFilter ?? this.selectedFilter,
+      searchText: searchText ?? this.searchText,
     );
   }
 
   @override
   List<Object?> get props => [
-    status,
-    allPharmacies,
-    visiblePharmacies,
-    query,
-    errorMessage,
-  ];
+        allPharmacies,
+        visiblePharmacies,
+        selectedFilter,
+        searchText,
+      ];
+}
+
+class CollectionPharmaciesFailure
+    extends CollectionPharmaciesState {
+  const CollectionPharmaciesFailure({
+    required this.message,
+  });
+
+  final String message;
+
+  @override
+  List<Object?> get props => [message];
 }

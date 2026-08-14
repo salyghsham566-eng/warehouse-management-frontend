@@ -1,107 +1,100 @@
 import 'package:equatable/equatable.dart';
 import 'package:project_2/Features/auth/data/models/collection_payment_model.dart';
 
-enum CollectionPaymentSubmitStatus { initial, submitting, success, failure }
+enum CollectionPaymentSubmitStatus {
+  initial,
+  submitting,
+  success,
+  failure,
+}
 
-class CollectionPaymentFormState extends Equatable {
-  CollectionPaymentFormState({
+const Object _unset = Object();
+
+class CollectionPaymentFormState
+    extends Equatable {
+  const CollectionPaymentFormState({
     required this.officialBalance,
-    DateTime? paymentDate,
-    this.amountText = '',
-    this.paymentMethod = CollectionPaymentMethod.cash,
-    this.notes = '',
+    required this.enteredAmount,
+    required this.paymentDate,
+    required this.paymentMethod,
+    required this.notes,
+    required this.submitStatus,
     this.receiptImagePath,
-    this.submitStatus = CollectionPaymentSubmitStatus.initial,
-    this.errorMessage,
     this.savedPayment,
-  }) : paymentDate = paymentDate ?? DateTime.now();
+    this.errorMessage,
+  });
 
   final double officialBalance;
-
-  final String amountText;
+  final double enteredAmount;
   final DateTime paymentDate;
-
   final CollectionPaymentMethod paymentMethod;
-
   final String notes;
   final String? receiptImagePath;
 
-  final CollectionPaymentSubmitStatus submitStatus;
+  final CollectionPaymentSubmitStatus
+      submitStatus;
 
-  final String? errorMessage;
   final CollectionPaymentModel? savedPayment;
-
-  double get enteredAmount {
-    final String normalized = _normalizeAmount(amountText);
-
-    return double.tryParse(normalized) ?? 0;
-  }
+  final String? errorMessage;
 
   double get expectedBalance {
     return officialBalance - enteredAmount;
   }
 
   bool get isSubmitting {
-    return submitStatus == CollectionPaymentSubmitStatus.submitting;
+    return submitStatus ==
+        CollectionPaymentSubmitStatus.submitting;
   }
 
   CollectionPaymentFormState copyWith({
     double? officialBalance,
-    String? amountText,
+    double? enteredAmount,
     DateTime? paymentDate,
     CollectionPaymentMethod? paymentMethod,
     String? notes,
-    String? receiptImagePath,
-    bool removeReceiptImage = false,
+    Object? receiptImagePath = _unset,
     CollectionPaymentSubmitStatus? submitStatus,
-    String? errorMessage,
-    bool clearErrorMessage = false,
-    CollectionPaymentModel? savedPayment,
+    Object? savedPayment = _unset,
+    Object? errorMessage = _unset,
   }) {
     return CollectionPaymentFormState(
-      officialBalance: officialBalance ?? this.officialBalance,
-      amountText: amountText ?? this.amountText,
-      paymentDate: paymentDate ?? this.paymentDate,
-      paymentMethod: paymentMethod ?? this.paymentMethod,
+      officialBalance:
+          officialBalance ?? this.officialBalance,
+      enteredAmount:
+          enteredAmount ?? this.enteredAmount,
+      paymentDate:
+          paymentDate ?? this.paymentDate,
+      paymentMethod:
+          paymentMethod ?? this.paymentMethod,
       notes: notes ?? this.notes,
-      receiptImagePath: removeReceiptImage
-          ? null
-          : receiptImagePath ?? this.receiptImagePath,
-      submitStatus: submitStatus ?? this.submitStatus,
-      errorMessage: clearErrorMessage
-          ? null
-          : errorMessage ?? this.errorMessage,
-      savedPayment: savedPayment ?? this.savedPayment,
+      receiptImagePath:
+          identical(receiptImagePath, _unset)
+              ? this.receiptImagePath
+              : receiptImagePath as String?,
+      submitStatus:
+          submitStatus ?? this.submitStatus,
+      savedPayment:
+          identical(savedPayment, _unset)
+              ? this.savedPayment
+              : savedPayment
+                  as CollectionPaymentModel?,
+      errorMessage:
+          identical(errorMessage, _unset)
+              ? this.errorMessage
+              : errorMessage as String?,
     );
   }
 
   @override
   List<Object?> get props => [
-    officialBalance,
-    amountText,
-    paymentDate,
-    paymentMethod,
-    notes,
-    receiptImagePath,
-    submitStatus,
-    errorMessage,
-    savedPayment,
-  ];
-}
-
-String _normalizeAmount(String value) {
-  return value
-      .trim()
-      .replaceAll(',', '')
-      .replaceAll('٫', '.')
-      .replaceAll('٠', '0')
-      .replaceAll('١', '1')
-      .replaceAll('٢', '2')
-      .replaceAll('٣', '3')
-      .replaceAll('٤', '4')
-      .replaceAll('٥', '5')
-      .replaceAll('٦', '6')
-      .replaceAll('٧', '7')
-      .replaceAll('٨', '8')
-      .replaceAll('٩', '9');
+        officialBalance,
+        enteredAmount,
+        paymentDate,
+        paymentMethod,
+        notes,
+        receiptImagePath,
+        submitStatus,
+        savedPayment,
+        errorMessage,
+      ];
 }

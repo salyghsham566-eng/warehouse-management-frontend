@@ -1,12 +1,16 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:project_2/Core/api_client.dart';
+import 'package:project_2/Core/di/injection_container.dart';
+import 'package:project_2/Features/auth/bloc/login_bloc.dart';
 import 'package:project_2/Features/auth/bloc/profile_bloc.dart';
 import 'package:project_2/Features/auth/bloc/profile_event.dart';
 import 'package:project_2/Features/auth/domain/repositories/profile_repository.dart';
+import 'package:project_2/Features/auth/presentation/LogIn.dart';
 import 'package:project_2/Features/auth/presentation/Profile.dart';
 import 'package:project_2/InventoryScreen.dart';
 import 'package:project_2/OffersScreen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -112,6 +116,8 @@ class HomeScreen extends StatelessWidget {
                   currentAccountPicture: CircleAvatar(
                     backgroundColor: Colors.white,
                     child: Icon(
+                   
+                   
                       Icons.person,
                       size: 40,
                       color: Color(0xFF12355B),
@@ -148,11 +154,39 @@ class HomeScreen extends StatelessWidget {
                     "تسجيل الخروج",
                     style: TextStyle(color: Colors.red),
                   ),
-                  onTap: () {
-                    Navigator.pop(context);
+                 onTap: () async {
+  Navigator.pop(context);
 
-                    // لاحقاً نرسل LogoutRequested إلى LoginBloc.
-                  },
+  final prefs =
+      await SharedPreferences.getInstance();
+
+  // حذف بيانات جلسة المندوب
+  await prefs.remove('token');
+  await prefs.remove('role');
+  await prefs.remove('name');
+  await prefs.remove('usernameOrPhone');
+
+  // حذف التوكن من Dio
+  sl<Dio>()
+      .options
+      .headers
+      .remove('Authorization');
+
+  if (!context.mounted) return;
+
+  // الرجوع للـ Login وحذف كل الصفحات السابقة
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(
+      builder: (_) =>
+          BlocProvider<LoginBloc>(
+        create: (_) => sl<LoginBloc>(),
+        child:
+            const RepresentativeLoginScreen(),
+      ),
+    ),
+    (route) => false,
+  );
+},
                 ),
               ],
             ),

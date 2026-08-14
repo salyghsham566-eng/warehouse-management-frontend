@@ -4,25 +4,49 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:project_2/Core/di/injection_container.dart';
 import 'package:project_2/Core/theme/app_colors.dart';
 import 'package:project_2/Features/auth/bloc/collection_payment_form_bloc.dart';
 import 'package:project_2/Features/auth/bloc/collection_payment_form_event.dart';
 import 'package:project_2/Features/auth/bloc/collection_payment_form_state.dart';
 import 'package:project_2/Features/auth/data/models/2pharmacy_model.dart';
 import 'package:project_2/Features/auth/data/models/collection_payment_model.dart';
-import 'package:project_2/Features/auth/presentation/collection_payments_history_feature_page.dart';
 
-class CollectionPaymentFormPage extends StatefulWidget {
-  const CollectionPaymentFormPage({required this.pharmacy, super.key});
+class CollectionPaymentFormPage extends StatelessWidget {
+  const CollectionPaymentFormPage({
+    required this.pharmacy,
+    super.key,
+  });
 
   final CollectionPharmacyModel pharmacy;
 
   @override
-  State<CollectionPaymentFormPage> createState() =>
-      _CollectionPaymentFormPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider<CollectionPaymentFormBloc>(
+      create: (_) => sl<CollectionPaymentFormBloc>(
+        param1: pharmacy,
+      ),
+      child: _CollectionPaymentFormView(
+        pharmacy: pharmacy,
+      ),
+    );
+  }
 }
 
-class _CollectionPaymentFormPageState extends State<CollectionPaymentFormPage> {
+class _CollectionPaymentFormView extends StatefulWidget {
+  const _CollectionPaymentFormView({
+    required this.pharmacy,
+  });
+
+  final CollectionPharmacyModel pharmacy;
+
+  @override
+  State<_CollectionPaymentFormView> createState() =>
+      _CollectionPaymentFormViewState();
+}
+
+class _CollectionPaymentFormViewState
+    extends State<_CollectionPaymentFormView> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _amountController = TextEditingController();
@@ -356,14 +380,9 @@ class _CollectionPaymentFormPageState extends State<CollectionPaymentFormPage> {
         return;
       }
 
-     Navigator.of(context).pushReplacement(
-  MaterialPageRoute<void>(
-    builder: (_) =>
-        CollectionPaymentsHistoryFeaturePage(
-      initialPharmacyId: widget.pharmacy.id,
-    ),
-  ),
-);
+      Navigator.of(context).pop(
+        state.savedPayment,
+      );
     }
   }
 

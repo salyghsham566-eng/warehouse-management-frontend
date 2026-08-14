@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:project_2/Features/auth/bloc/collection_payments_history_filter.dart';
 import 'package:project_2/Features/auth/data/models/collection_payment_model.dart';
 
 enum CollectionPaymentsHistoryStatus {
@@ -8,48 +9,57 @@ enum CollectionPaymentsHistoryStatus {
   failure,
 }
 
+const Object _unset = Object();
+
 class CollectionPaymentsHistoryState
     extends Equatable {
   const CollectionPaymentsHistoryState({
     this.status =
         CollectionPaymentsHistoryStatus.initial,
-    this.allPayments =
-        const <CollectionPaymentModel>[],
-    this.visiblePayments =
-        const <CollectionPaymentModel>[],
-    this.selectedPharmacyId,
+    this.allPayments = const [],
+    this.visiblePayments = const [],
+    this.selectedFilter =
+        CollectionPaymentsHistoryFilter.all,
+    this.searchText = '',
     this.errorMessage,
   });
 
   final CollectionPaymentsHistoryStatus status;
 
   final List<CollectionPaymentModel> allPayments;
-  final List<CollectionPaymentModel> visiblePayments;
+  final List<CollectionPaymentModel>
+      visiblePayments;
 
-  final String? selectedPharmacyId;
+  final CollectionPaymentsHistoryFilter
+      selectedFilter;
+
+  final String searchText;
   final String? errorMessage;
 
   CollectionPaymentsHistoryState copyWith({
     CollectionPaymentsHistoryStatus? status,
     List<CollectionPaymentModel>? allPayments,
-    List<CollectionPaymentModel>? visiblePayments,
-    String? selectedPharmacyId,
-    bool clearPharmacyFilter = false,
-    String? errorMessage,
-    bool clearErrorMessage = false,
+    List<CollectionPaymentModel>?
+        visiblePayments,
+    CollectionPaymentsHistoryFilter?
+        selectedFilter,
+    String? searchText,
+    Object? errorMessage = _unset,
   }) {
     return CollectionPaymentsHistoryState(
       status: status ?? this.status,
-      allPayments: allPayments ?? this.allPayments,
+      allPayments:
+          allPayments ?? this.allPayments,
       visiblePayments:
           visiblePayments ?? this.visiblePayments,
-      selectedPharmacyId: clearPharmacyFilter
-          ? null
-          : selectedPharmacyId ??
-              this.selectedPharmacyId,
-      errorMessage: clearErrorMessage
-          ? null
-          : errorMessage ?? this.errorMessage,
+      selectedFilter:
+          selectedFilter ?? this.selectedFilter,
+      searchText:
+          searchText ?? this.searchText,
+      errorMessage:
+          identical(errorMessage, _unset)
+              ? this.errorMessage
+              : errorMessage as String?,
     );
   }
 
@@ -58,7 +68,8 @@ class CollectionPaymentsHistoryState
         status,
         allPayments,
         visiblePayments,
-        selectedPharmacyId,
+        selectedFilter,
+        searchText,
         errorMessage,
       ];
 }
