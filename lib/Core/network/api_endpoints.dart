@@ -187,4 +187,34 @@ static const String representativeAccount =
     static const String
     representativeAccountPassword =
     '/representative/account/password';
+    // =========================================================
+// Notifications - UC-246 -> UC-260
+// =========================================================
+
+static const String representativeNotifications =
+    '/representative/notifications';
+
+// UC-249
+static String notificationDetails(
+  String notificationId,
+) {
+  return '/representative/notifications/'
+      '${Uri.encodeComponent(notificationId)}';
+}
+
+// UC-253
+static String notificationMarkRead(
+  String notificationId,
+) {
+  return '/representative/notifications/'
+      '${Uri.encodeComponent(notificationId)}/read';
+}
+
+// UC-254
+static const String notificationsMarkAllRead =
+    '/representative/notifications/read-all';
+
+// UC-260
+static const String notificationsArchive =
+    '/representative/notifications/archive';
 }

@@ -204,9 +204,10 @@ class _DashboardContent extends StatelessWidget {
         children: [
           const Text(
             'التحصيل',
+             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 28,
+              fontSize: 26,
               height: 1.1,
               fontWeight: FontWeight.w900,
             ),
@@ -216,6 +217,7 @@ class _DashboardContent extends StatelessWidget {
 
           const Text(
             'متابعة وتسجيل الدفعات النقدية اليومية',
+             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,

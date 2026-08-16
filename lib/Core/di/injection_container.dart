@@ -142,7 +142,15 @@ import 'package:project_2/Features/auth/domain/repositories/work_plans_repositor
 import 'package:project_2/Features/auth/domain/repositories/warehouse_repository.dart';
 import 'package:project_2/Features/auth/services/pharmacy_statement_pdf_service.dart';
 import 'package:project_2/Features/auth/services/region_statement_pdf_service.dart';
+import 'package:project_2/Features/auth/bloc/notifications_bloc.dart';
 
+import 'package:project_2/Features/auth/data/datasources/notifications_data_source.dart';
+import 'package:project_2/Features/auth/data/datasources/mock_notifications_data_source.dart';
+import 'package:project_2/Features/auth/data/datasources/remote_notifications_data_source.dart';
+
+import 'package:project_2/Features/auth/data/repositories/notifications_repository_impl.dart';
+
+import 'package:project_2/Features/auth/domain/repositories/notifications_repository.dart';
 final GetIt sl = GetIt.instance;
 
 Future<void> initializeDependencies() async {
@@ -1077,6 +1085,47 @@ if (!sl.isRegistered<ProfileBloc>()) {
     () => ChangePasswordBloc(
       repository:
           sl<ProfileRepository>(),
+    ),
+  );
+}
+// =========================================================
+// Notifications - UC-246 -> UC-260
+// =========================================================
+
+// Data Source
+if (!sl.isRegistered<
+    NotificationsDataSource>()) {
+  sl.registerLazySingleton<
+      NotificationsDataSource>(
+    () => AppEnvironment.useRemoteData
+        ? RemoteNotificationsDataSource(
+            dio: sl<Dio>(),
+          )
+        : MockNotificationsDataSource(),
+  );
+}
+
+// Repository
+if (!sl.isRegistered<
+    NotificationsRepository>()) {
+  sl.registerLazySingleton<
+      NotificationsRepository>(
+    () =>
+        NotificationsRepositoryImpl(
+      dataSource:
+          sl<NotificationsDataSource>(),
+    ),
+  );
+}
+
+// Bloc
+if (!sl.isRegistered<
+    NotificationsBloc>()) {
+  sl.registerFactory<
+      NotificationsBloc>(
+    () => NotificationsBloc(
+      repository:
+          sl<NotificationsRepository>(),
     ),
   );
 }

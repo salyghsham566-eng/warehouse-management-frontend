@@ -76,39 +76,7 @@ void dispose() {
               ),
             ),
       
-            actions: [
-              Stack(
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.shopping_cart_outlined,
-                      color: Colors.black87,
-                      size: 30,
-                    ),
-                    onPressed: () {},
-                  ),
-      
-                  Positioned(
-                    top: 6,
-                    left: 6,
-                    child: Container(
-                      width: 18,
-                      height: 18,
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          "3",
-                          style: TextStyle(color: Colors.white, fontSize: 11),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+           
           ),
       
           body: SingleChildScrollView(
@@ -117,47 +85,10 @@ void dispose() {
       
               child: Column(
                 children: [
-                  ////////////////////////////////////////////////
-                  /// Welcome Card
-                  ////////////////////////////////////////////////
+               
       
                   /// Welcome Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xff163B6B),
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.12),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        //ربط
-                        Text(
-                          "مرحباً، أحمد محمد",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                        SizedBox(height: 6),
-      
-                        //ربط
-                      ],
-                    ),
-                  ),
-      
-                  const SizedBox(
-                    height: 22,
-                  ), ////////////////////////////////////////////////
+                  ///////////////////////////////////////////////
                   /// Create Order Card
                   ////////////////////////////////////////////////
                   InkWell(
