@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:project_2/Core/di/injection_container.dart';
+import 'package:project_2/Features/auth/bloc/offers_bloc.dart';
+import 'package:project_2/Features/auth/bloc/offers_event.dart';
+import 'package:project_2/Features/auth/bloc/current_order_cart_utils.dart';
+import 'package:project_2/Features/auth/presentation/ChooseCompanyScreen.dart';
 import 'package:project_2/Features/auth/presentation/choose_pharmacy_screen.dart';
 import 'package:project_2/Features/auth/presentation/order_review_screen.dart';
+import 'package:project_2/Features/auth/presentation/representative_offers_screen.dart';
 
 class OrderCartScreen extends StatefulWidget {
   final List<Map<String, dynamic>> items;
@@ -15,12 +22,10 @@ class OrderCartScreen extends StatefulWidget {
 class _OrderCartScreenState extends State<OrderCartScreen> {
   final TextEditingController noteController = TextEditingController();
 
-  // الصيدلية المرتبطة بالطلبية مؤقتاً
-  // لاحقاً ستأتي من صفحة اختيار الصيدلية
+  // الصيدلية المرتبطة بالطلبية
   Map<String, dynamic>? selectedPharmacy;
 
-  // أصناف الطلبية مؤقتاً
-  // لاحقاً ستأتي من صفحة الأدوية
+  // جميع عناصر الطلبية: منتجات عادية + عروض + سلال ترويجية
   late List<Map<String, dynamic>> orderItems;
 
   double _toDouble(dynamic value) {
@@ -43,27 +48,193 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
     final dynamic offer = item["basicOffer"];
 
     if (offer is! Map) {
-      return 0;
+      return _toInt(item["freeQuantity"]);
     }
 
     final int buyQuantity = _toInt(offer["buyQuantity"]);
-
     final int freeQuantity = _toInt(offer["freeQuantity"]);
-
     final int quantity = _toInt(item["quantity"]);
 
-    if (buyQuantity <= 0) {
+    if (buyQuantity <= 0 || freeQuantity <= 0 || quantity <= 0) {
       return 0;
     }
 
-    final int offerCount = quantity ~/ buyQuantity;
+    return (quantity ~/ buyQuantity) * freeQuantity;
+  }
 
-    return offerCount * freeQuantity;
+  Map<String, dynamic> _normalizeOrderItem(
+    Map<String, dynamic> rawItem,
+  ) {
+    final Map<String, dynamic> item =
+        normalizeCurrentOrderCartItem(
+      Map<String, dynamic>.from(rawItem),
+    );
+
+    final String source =
+        item["offerSource"]?.toString().trim() ?? "";
+
+    if (source.isEmpty) {
+      final String basketId =
+          (item["promotionBasketId"] ?? item["promotion_basket_id"] ?? "")
+              .toString();
+      final String offerId =
+          (item["offerId"] ?? item["offer_id"] ?? "").toString();
+
+      if (basketId.isNotEmpty) {
+        item["offerSource"] = "سلة ترويجية";
+      } else if (offerId.isNotEmpty) {
+        item["offerSource"] = "عرض ترويجي";
+      } else if (_getFreeQuantity(item) > 0) {
+        item["offerSource"] = "عرض صنف أساسي";
+      }
+    }
+
+    return item;
+  }
+
+  Map<String, dynamic> _sharedCartEntry(
+    Map<String, dynamic> rawItem,
+  ) {
+    final Map<String, dynamic> item = _normalizeOrderItem(rawItem);
+    final int paidQuantity = _toInt(item["quantity"]);
+    final int freeQuantity = _getFreeQuantity(item);
+    final String cartKey = item["cartKey"]?.toString() ??
+        buildCurrentOrderCartKey(item);
+
+    item["cartKey"] = cartKey;
+    item["freeQuantity"] = freeQuantity;
+    item["totalQuantity"] = paidQuantity + freeQuantity;
+
+    return {
+      "product": Map<String, dynamic>.from(item)
+        ..remove("cartKey")
+        ..remove("quantity")
+        ..remove("freeQuantity")
+        ..remove("totalQuantity"),
+      "cartKey": cartKey,
+      "paidQuantity": paidQuantity,
+      "freeQuantity": freeQuantity,
+      "totalQuantity": paidQuantity + freeQuantity,
+      "offerSource": item["offerSource"],
+    };
+  }
+
+  // نحضر نسخة مشتركة من نفس الطلبية قبل فتح الشركات أو العروض.
+  // نفس الـMap يمر بين كل الواجهات، لذلك أي إضافة ترجع لنفس الطلبية.
+  Map<String, Map<String, dynamic>> _prepareSharedCartForCurrentOrder() {
+    final Map<String, Map<String, dynamic>> sharedCart =
+        widget.cartItems ?? <String, Map<String, dynamic>>{};
+
+    sharedCart.clear();
+
+    for (final rawItem in orderItems) {
+      final Map<String, dynamic> entry = _sharedCartEntry(rawItem);
+      final String cartKey = entry["cartKey"]?.toString() ?? "";
+
+      if (cartKey.isNotEmpty) {
+        sharedCart[cartKey] = entry;
+      }
+    }
+
+    return sharedCart;
+  }
+
+  void _syncOrderItemsFromSharedCart(
+    Map<String, Map<String, dynamic>> sharedCart,
+  ) {
+    final List<Map<String, dynamic>> updatedItems = [];
+
+    for (final cartItem in sharedCart.values) {
+      final dynamic rawProduct = cartItem["product"];
+
+      if (rawProduct is! Map) {
+        continue;
+      }
+
+      final Map<String, dynamic> product =
+          Map<String, dynamic>.from(rawProduct);
+
+      final Map<String, dynamic> item = _normalizeOrderItem({
+        ...product,
+        "cartKey": cartItem["cartKey"],
+        "quantity": cartItem["paidQuantity"] ?? 1,
+        "freeQuantity": cartItem["freeQuantity"] ?? 0,
+        "totalQuantity": cartItem["totalQuantity"] ??
+            cartItem["paidQuantity"] ??
+            1,
+        "offerSource": cartItem["offerSource"] ?? product["offerSource"],
+        "discountPercent": product["discountPercent"] ?? 0,
+      });
+
+      updatedItems.add(item);
+    }
+
+    setState(() {
+      orderItems = updatedItems;
+    });
+  }
+
+  Future<void> _openCompaniesForCurrentOrder() async {
+    final Map<String, Map<String, dynamic>> sharedCart =
+        _prepareSharedCartForCurrentOrder();
+
+    final int oldCount = sharedCart.length;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChooseCompanyPage(
+          cartItems: sharedCart,
+          returnToExistingOrder: true,
+        ),
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    _syncOrderItemsFromSharedCart(sharedCart);
+
+    if (sharedCart.length > oldCount) {
+      _showMessage("تمت إضافة الأصناف إلى الطلبية الحالية");
+    }
+  }
+
+  Future<void> _openOffersAndDiscounts() async {
+    final Map<String, Map<String, dynamic>> sharedCart =
+        _prepareSharedCartForCurrentOrder();
+
+    final int oldCount = sharedCart.length;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) {
+          return BlocProvider<OffersBloc>(
+            create: (_) => sl<OffersBloc>()..add(LoadOffersEvent()),
+            child: RepresentativeOffersScreen(
+              selectForOrder: true,
+              cartItems: sharedCart,
+            ),
+          );
+        },
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    _syncOrderItemsFromSharedCart(sharedCart);
+
+    if (sharedCart.length > oldCount) {
+      _showMessage("تمت إضافة العروض والسلال إلى نفس الطلبية");
+    }
   }
 
   double _getItemSubtotal(Map<String, dynamic> item) {
     final double price = _toDouble(item["price"]);
-
     final int quantity = _toInt(item["quantity"]);
 
     return price * quantity;
@@ -71,7 +242,6 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
 
   double _getItemDiscount(Map<String, dynamic> item) {
     final double subtotal = _getItemSubtotal(item);
-
     final double discountPercent = _toDouble(item["discountPercent"]);
 
     return subtotal * (discountPercent / 100);
@@ -110,37 +280,19 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
   }
 
   void _syncCartItem(int index) {
+    final Map<String, dynamic> item = _normalizeOrderItem(orderItems[index]);
+    orderItems[index] = item;
+
     if (widget.cartItems == null) {
       return;
     }
 
-    final item = orderItems[index];
-    final String cartKey = item["cartKey"]?.toString() ?? "";
+    final Map<String, dynamic> entry = _sharedCartEntry(item);
+    final String cartKey = entry["cartKey"]?.toString() ?? "";
 
-    if (cartKey.isEmpty) {
-      return;
+    if (cartKey.isNotEmpty) {
+      widget.cartItems![cartKey] = entry;
     }
-
-    final int freeQuantity = _getFreeQuantity(item);
-    final int paidQuantity = _toInt(item["quantity"]);
-
-    item["freeQuantity"] = freeQuantity;
-    item["totalQuantity"] = paidQuantity + freeQuantity;
-    item["offerSource"] = freeQuantity > 0 ? "عرض صنف أساسي" : null;
-
-    widget.cartItems![cartKey] = {
-      "product": Map<String, dynamic>.from(item)
-        ..remove("cartKey")
-        ..remove("quantity")
-        ..remove("freeQuantity")
-        ..remove("totalQuantity")
-        ..remove("offerSource"),
-      "cartKey": cartKey,
-      "paidQuantity": paidQuantity,
-      "freeQuantity": freeQuantity,
-      "totalQuantity": paidQuantity + freeQuantity,
-      "offerSource": item["offerSource"],
-    };
   }
 
   void _increaseQuantity(int index) {
@@ -329,16 +481,24 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
     super.initState();
 
     orderItems = widget.items
-        .map((item) => Map<String, dynamic>.from(item))
+        .map(
+          (item) => _normalizeOrderItem(
+            Map<String, dynamic>.from(item),
+          ),
+        )
         .toList();
 
-    for (var i = 0; i < orderItems.length; i++) {
-      final int freeQuantity = _getFreeQuantity(orderItems[i]);
-      final int paidQuantity = _toInt(orderItems[i]["quantity"]);
+    if (widget.cartItems != null) {
+      widget.cartItems!.clear();
 
-      orderItems[i]["freeQuantity"] = freeQuantity;
-      orderItems[i]["totalQuantity"] = paidQuantity + freeQuantity;
-      orderItems[i]["offerSource"] = freeQuantity > 0 ? "عرض صنف أساسي" : null;
+      for (final item in orderItems) {
+        final Map<String, dynamic> entry = _sharedCartEntry(item);
+        final String cartKey = entry["cartKey"]?.toString() ?? "";
+
+        if (cartKey.isNotEmpty) {
+          widget.cartItems![cartKey] = entry;
+        }
+      }
     }
   }
 
@@ -561,6 +721,9 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
 
     final dynamic offer = item["basicOffer"];
 
+    final String offerSource =
+        item["offerSource"]?.toString().trim() ?? "";
+
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
@@ -774,6 +937,39 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
             ],
           ),
 
+          if (offerSource.isNotEmpty) ...[
+            const SizedBox(height: 11),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xffF2ECFF),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.local_offer_outlined,
+                    color: Color(0xff7A5AF8),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      offerSource,
+                      style: const TextStyle(
+                        color: Color(0xff6D50D3),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           if (offer is Map && freeQuantity > 0) ...[
             const SizedBox(height: 11),
 
@@ -973,9 +1169,8 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
               child: SizedBox(
                 height: 44,
                 child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
+                  onPressed:
+      _openCompaniesForCurrentOrder,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xff0A2954),
                     side: const BorderSide(color: Color(0xffAEB8C7)),
@@ -985,7 +1180,33 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                   ),
                   child: const Text(
                     "إضافة أصناف",
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 7),
+
+            Expanded(
+              child: SizedBox(
+                height: 44,
+                child: OutlinedButton.icon(
+                  onPressed: _openOffersAndDiscounts,
+                  icon: const Icon(
+                    Icons.local_offer_outlined,
+                    size: 16,
+                  ),
+                  label: const Text(
+                    "العروض",
+                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xff7A5AF8),
+                    side: const BorderSide(color: Color(0xffB7A7F8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(9),
+                    ),
                   ),
                 ),
               ),
@@ -1008,13 +1229,12 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                   ),
                   child: const Text(
                     "مراجعة الطلبية",
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
             ),
-
-            const SizedBox(width: 7),
           ],
         ),
       ),

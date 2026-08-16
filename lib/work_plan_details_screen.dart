@@ -279,19 +279,17 @@ if (plan.status ==
                                   ),
 
                                   // UC-198
-                                  BlocProvider<
-                                      WorkPlanPersonalNoteBloc>(
-                                    create: (_) =>
-                                        sl<
-                                            WorkPlanPersonalNoteBloc>(),
+                                  // نستخدم نفس Bloc الموجود من شاشة التفاصيل
+                                  BlocProvider.value(
+                                    value: context.read<
+                                        WorkPlanPersonalNoteBloc>(),
                                   ),
 
                                   // UC-199
-                                  BlocProvider<
-                                      WorkPlanOfficialNoteBloc>(
-                                    create: (_) =>
-                                        sl<
-                                            WorkPlanOfficialNoteBloc>(),
+                                  // نستخدم نفس Bloc الموجود من شاشة التفاصيل
+                                  BlocProvider.value(
+                                    value: context.read<
+                                        WorkPlanOfficialNoteBloc>(),
                                   ),
                                 ],
                                 child: WorkPlanNotesScreen(

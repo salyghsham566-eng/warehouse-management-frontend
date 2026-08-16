@@ -111,15 +111,39 @@ void initState() {
     return offerCount * freeQuantity;
   }
 
-  String _getOfferSource(Map<String, dynamic> item) {
-    final int freeQuantity = _getFreeQuantity(item);
+ String _getOfferSource(
+  Map<String, dynamic> item,
+) {
+  final String existingSource =
+      item['offerSource']
+              ?.toString()
+              .trim() ??
+          '';
 
-    if (freeQuantity <= 0) {
-      return "لا يوجد عرض";
-    }
-
-    return item["offerSource"]?.toString() ?? "عرض صنف أساسي";
+  if (existingSource.isNotEmpty) {
+    return existingSource;
   }
+
+  final int freeQuantity =
+      _getFreeQuantity(
+    item,
+  );
+
+  if (freeQuantity > 0) {
+    return 'عرض صنف أساسي';
+  }
+
+  final double discountPercent =
+      _getDiscountPercent(
+    item,
+  );
+
+  if (discountPercent > 0) {
+    return 'عرض ترويجي';
+  }
+
+  return 'لا يوجد عرض';
+}
 
   double _getItemSubtotal(Map<String, dynamic> item) {
     return _getPrice(item) * _getQuantity(item);
@@ -243,6 +267,11 @@ Map<String, dynamic> _buildStoredOrder({
             _getDiscountPercent(item),
         'freeQuantity': _getFreeQuantity(item),
         'offerSource': _getOfferSource(item),
+        'offerId':
+            item['offerId'] ?? item['offer_id'],
+        'promotionBasketId':
+    item['promotionBasketId'] ??
+        item['promotion_basket_id'],
         'subtotal': _getItemSubtotal(item),
         'discountValue': _getItemDiscount(item),
         'itemTotal': _getItemTotal(item),
@@ -315,35 +344,54 @@ if (pharmacyId <= 0) {
   return;
 }
 
-final List<OrderItemModel> orderItems =
-    reviewItems.map((item) {
-  return OrderItemModel(
-    productId: _toInt(
-  item['id'] ??
-      item['product_id'] ??
-      item['productId'] ??
-      item['medicineId'],
-),
-    quantity: _getQuantity(item),
-    price: _getPrice(item),
-  );
-}).toList();
+final List<OrderItemModel>
+    orderItems =
+    reviewItems.map(
+  (item) {
+    return OrderItemModel(
+      productId:
+          _toInt(
+        item['id'] ??
+            item['product_id'] ??
+            item['productId'] ??
+            item['medicineId'],
+      ),
 
-final bool hasInvalidProduct = orderItems.any(
-  (item) => item.productId <= 0,
-);
+      quantity:
+          _getQuantity(
+        item,
+      ),
 
-if (hasInvalidProduct) {
-  _showMessage(
-    'يوجد صنف بدون رقم معرّف صحيح',
-  );
-  return;
-}
+      price:
+          _getPrice(
+        item,
+      ),
 
-setState(() {
-  isSending = true;
-});
+      discountPercent:
+          _getDiscountPercent(
+        item,
+      ),
 
+      offerSource:
+          _getOfferSource(
+        item,
+      ),
+
+      offerId:
+          item['offerId']
+                  ?.toString() ??
+              item['offer_id']
+                  ?.toString(),
+
+      promotionBasketId:
+          item['promotionBasketId']
+                  ?.toString() ??
+              item[
+                      'promotion_basket_id']
+                  ?.toString(),
+    );
+  },
+).toList();
 final orderRequest = OrderRequestModel(
   pharmacyId: pharmacyId,
   items: orderItems,

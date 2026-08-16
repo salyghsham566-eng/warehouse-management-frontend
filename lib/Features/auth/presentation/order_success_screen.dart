@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:project_2/Features/auth/presentation/ChooseCompanyScreen.dart';
-import 'package:project_2/Features/auth/presentation/order_details_screen.dart';
 import 'package:project_2/Features/auth/presentation/orders_tracking_screen.dart';
 
 class OrderSuccessScreen extends StatelessWidget {

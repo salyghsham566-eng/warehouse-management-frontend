@@ -8,30 +8,66 @@ import 'package:project_2/Features/auth/data/models/company_model.dart';
 import 'package:project_2/Features/auth/presentation/company_products_screen.dart';
 
 class ChooseCompanyPage extends StatelessWidget {
-  const ChooseCompanyPage({super.key});
+  final Map<String, Map<String, dynamic>>? cartItems;
+  final bool returnToExistingOrder;
+
+  const ChooseCompanyPage({
+    super.key,
+    this.cartItems,
+    this.returnToExistingOrder = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<CompaniesBloc>(
-      create: (_) => sl<CompaniesBloc>()
-        ..add(CompaniesStarted()),
-      child: const ChooseCompanyScreen(),
+      create: (_) =>
+          sl<CompaniesBloc>()
+            ..add(
+              CompaniesStarted(),
+            ),
+      child: ChooseCompanyScreen(
+        cartItems: cartItems,
+        returnToExistingOrder:
+            returnToExistingOrder,
+      ),
     );
   }
 }
 
-class ChooseCompanyScreen extends StatefulWidget {
-  const ChooseCompanyScreen({super.key});
+class ChooseCompanyScreen
+    extends StatefulWidget {
+  final Map<String, Map<String, dynamic>>?
+      cartItems;
+
+  final bool returnToExistingOrder;
+
+  const ChooseCompanyScreen({
+    super.key,
+    this.cartItems,
+    this.returnToExistingOrder = false,
+  });
 
   @override
-  State<ChooseCompanyScreen> createState() => _ChooseCompanyScreenState();
+  State<ChooseCompanyScreen>
+      createState() =>
+          _ChooseCompanyScreenState();
 }
 
 class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
   final TextEditingController searchController = TextEditingController();
 
-  final Map<String, Map<String, dynamic>> sharedCartItems = {};
+ late final Map<
+    String,
+    Map<String, dynamic>> sharedCartItems;
 
+@override
+void initState() {
+  super.initState();
+
+  sharedCartItems =
+      widget.cartItems ??
+          <String, Map<String, dynamic>>{};
+}
   @override
   void dispose() {
     searchController.dispose();
@@ -356,17 +392,39 @@ class _ChooseCompanyScreenState extends State<ChooseCompanyScreen> {
             width: double.infinity,
             height: 43,
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => CompanyProductsScreen(
-                      company: company.toMap(),
-                      cartItems: sharedCartItems,
-                    ),
-                  ),
-                );
-              },
+              onPressed: () async {
+  final dynamic result =
+      await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) =>
+          CompanyProductsScreen(
+        company:
+            company.toMap(),
+
+        cartItems:
+            sharedCartItems,
+
+        returnToExistingOrder:
+            widget.returnToExistingOrder,
+      ),
+    ),
+  );
+
+  if (!mounted) {
+    return;
+  }
+
+  // إذا دخلنا من طلبية موجودة
+  // منرجع مباشرة لنفس الطلبية
+  if (widget.returnToExistingOrder &&
+      result == true) {
+    Navigator.pop(
+      context,
+      true,
+    );
+  }
+},
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xff062B57),
                 foregroundColor: Colors.white,

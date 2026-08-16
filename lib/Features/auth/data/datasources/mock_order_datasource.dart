@@ -3,6 +3,10 @@ import '../models/order_response_model.dart';
 import 'order_datasource.dart';
 
 class MockOrderDataSource implements OrderDataSource {
+  // ORD-1001 و ORD-1002 مستخدمان في البيانات الافتراضية.
+  // لذلك تبدأ الطلبيات الجديدة من 1003 ويزيد الرقم مع كل إرسال.
+  static int _nextOrderNumber = 1003;
+
   @override
   Future<OrderResponseModel> sendOrder(
     OrderRequestModel order,
@@ -23,8 +27,11 @@ class MockOrderDataSource implements OrderDataSource {
       throw Exception('إجمالي الطلب غير صحيح');
     }
 
-    return const OrderResponseModel(
-      orderNumber: 'ORD-1001',
+    final String orderNumber =
+        'ORD-${_nextOrderNumber++}';
+
+    return OrderResponseModel(
+      orderNumber: orderNumber,
       message: 'تم إرسال الطلب بنجاح',
     );
   }

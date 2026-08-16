@@ -1,21 +1,21 @@
+import 'dart:typed_data';
+
 abstract class ProfileEvent {}
 
-class ProfileRequested extends ProfileEvent {}
+class ProfileRequested
+    extends ProfileEvent {}
 
-class ProfileUpdateRequested extends ProfileEvent {
-  final String username;
+class ProfileUpdateRequested
+    extends ProfileEvent {
   final String phone;
-  final String address;
-  final String governorate;
-  final String birthDate;
-  final String? password;
+
+  final String email;
+
+  final Uint8List? imageBytes;
 
   ProfileUpdateRequested({
-    required this.username,
     required this.phone,
-    required this.address,
-    required this.governorate,
-    required this.birthDate,
-    this.password,
+    required this.email,
+    this.imageBytes,
   });
 }

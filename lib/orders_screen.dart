@@ -8,6 +8,7 @@ import 'package:project_2/Features/auth/presentation/ChooseCompanyScreen.dart';
 import 'package:project_2/Features/auth/presentation/order_details_screen.dart';
 import 'package:project_2/Features/auth/presentation/orders_archive_screen.dart';
 import 'package:project_2/Features/auth/presentation/orders_tracking_screen.dart';
+import 'package:project_2/orders_store.dart';
 
 class OrdersScreen extends StatefulWidget {
 
@@ -25,10 +26,28 @@ void initState() {
 
   _ordersBloc = sl<OrdersTrackingBloc>()
     ..add(const OrdersTrackingStarted());
+
+  // أي طلبية جديدة تُحفظ في OrdersStore لازم تحدث قسم آخر الطلبات فوراً.
+  OrdersStore.instance.ordersNotifier.addListener(
+    _refreshLatestOrders,
+  );
+}
+
+void _refreshLatestOrders() {
+  if (!mounted || _ordersBloc.isClosed) {
+    return;
+  }
+
+  _ordersBloc.add(
+    const OrdersTrackingRefreshed(),
+  );
 }
 
 @override
 void dispose() {
+  OrdersStore.instance.ordersNotifier.removeListener(
+    _refreshLatestOrders,
+  );
   _ordersBloc.close();
   super.dispose();
 }

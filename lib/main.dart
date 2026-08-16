@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:project_2/Core/theme/app_colors.dart';
+import 'package:project_2/Features/auth/bloc/current_order_cart_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:project_2/Core/di/injection_container.dart';
@@ -52,106 +53,112 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
+    return BlocProvider<CurrentOrderCartBloc>(
+  create: (_) =>
+      CurrentOrderCartBloc(),
 
-      locale: const Locale('ar'),
-
-      supportedLocales: const [
-        Locale('ar'),
-        Locale('en'),
-      ],
-
-      localizationsDelegates:
-          GlobalMaterialLocalizations.delegates,
-
-      title: 'Sales Representative',
-
-theme: ThemeData(
-  useMaterial3: true,
-  fontFamily: 'Arial',
-
-  colorScheme: const ColorScheme.light(
-    primary: AppColors.primary,
-    secondary: AppColors.primary,
-    surface: Colors.white,
-    error: AppColors.danger,
-  ),
-
-  scaffoldBackgroundColor:
-      AppColors.background,
-
-  // الأزرار الأساسية
-  elevatedButtonTheme:
-      ElevatedButtonThemeData(
-    style: ElevatedButton.styleFrom(
+  
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+      
+        locale: const Locale('ar'),
+      
+        supportedLocales: const [
+          Locale('ar'),
+          Locale('en'),
+        ],
+      
+        localizationsDelegates:
+            GlobalMaterialLocalizations.delegates,
+      
+        title: 'Sales Representative',
+      
+      theme: ThemeData(
+        useMaterial3: true,
+        fontFamily: 'Arial',
+      
+        colorScheme: const ColorScheme.light(
+      primary: AppColors.primary,
+      secondary: AppColors.primary,
+      surface: Colors.white,
+      error: AppColors.danger,
+        ),
+      
+        scaffoldBackgroundColor:
+        AppColors.background,
+      
+        // الأزرار الأساسية
+        elevatedButtonTheme:
+        ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor:
+            AppColors.primary,
+        foregroundColor:
+            Colors.white,
+      ),
+        ),
+      
+        // الأزرار النصية مثل إلغاء
+        textButtonTheme:
+        TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor:
+            AppColors.primary,
+      ),
+        ),
+      
+        // التقويم
+        datePickerTheme:
+        const DatePickerThemeData(
       backgroundColor:
-          AppColors.primary,
-      foregroundColor:
           Colors.white,
-    ),
-  ),
-
-  // الأزرار النصية مثل إلغاء
-  textButtonTheme:
-      TextButtonThemeData(
-    style: TextButton.styleFrom(
-      foregroundColor:
+      
+      headerBackgroundColor:
           AppColors.primary,
-    ),
-  ),
-
-  // التقويم
-  datePickerTheme:
-      const DatePickerThemeData(
-    backgroundColor:
-        Colors.white,
-
-    headerBackgroundColor:
+      
+      headerForegroundColor:
+          Colors.white,
+      
+      todayForegroundColor:
+          WidgetStatePropertyAll(
         AppColors.primary,
-
-    headerForegroundColor:
-        Colors.white,
-
-    todayForegroundColor:
-        WidgetStatePropertyAll(
-      AppColors.primary,
-    ),
-
-    todayBorder:
-        BorderSide(
-      color:
-          AppColors.primary,
-    ),
-
-    dayForegroundColor:
-        WidgetStatePropertyAll(
-      AppColors.textPrimary,
-    ),
-  ),
-
-  // حقول الإدخال وقت التركيز
-  inputDecorationTheme:
-      const InputDecorationTheme(
-    focusedBorder:
-        OutlineInputBorder(
-      borderSide:
+      ),
+      
+      todayBorder:
           BorderSide(
         color:
             AppColors.primary,
-        width: 1.4,
       ),
-    ),
-  ),
-),
-
-      home: isLoggedIn
-          ? const HomeScreen2()
-          : BlocProvider<LoginBloc>(
-              create: (_) => sl<LoginBloc>(),
-              child:
-                  const RepresentativeLoginScreen(),
-            ),
+      
+      dayForegroundColor:
+          WidgetStatePropertyAll(
+        AppColors.textPrimary,
+      ),
+        ),
+      
+        // حقول الإدخال وقت التركيز
+        inputDecorationTheme:
+        const InputDecorationTheme(
+      focusedBorder:
+          OutlineInputBorder(
+        borderSide:
+            BorderSide(
+          color:
+              AppColors.primary,
+          width: 1.4,
+        ),
+      ),
+        ),
+      ),
+      
+        home: isLoggedIn
+            ? const HomeScreen2()
+            : BlocProvider<LoginBloc>(
+                create: (_) => sl<LoginBloc>(),
+                child:
+                    const RepresentativeLoginScreen(),
+              ),
+      ),
     );
   }
 }

@@ -27,38 +27,55 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     }
   }
 
-  Future<void> _updateProfile(
-    ProfileUpdateRequested event,
-    Emitter<ProfileState> emit,
-  ) async {
-    final ProfileModel? currentProfile = _getCurrentProfile(state);
+Future<void> _updateProfile(
+  ProfileUpdateRequested event,
+  Emitter<ProfileState> emit,
+) async {
+  final ProfileModel? currentProfile =
+      _getCurrentProfile(
+    state,
+  );
 
-    if (currentProfile == null) return;
-
-    emit(ProfileSaving(currentProfile));
-
-    try {
-      final updatedProfile = await profileRepository.updateProfile(
-        username: event.username,
-        phone: event.phone,
-        address: event.address,
-        governorate: event.governorate,
-        birthDate: event.birthDate,
-        password: event.password,
-      );
-
-      emit(
-        ProfileSaveSuccess(
-          profile: updatedProfile,
-          message: "تم حفظ التعديلات بنجاح",
-        ),
-      );
-    } catch (error) {
-      emit(
-        ProfileError(message: "تعذر حفظ التعديلات", profile: currentProfile),
-      );
-    }
+  if (currentProfile == null) {
+    return;
   }
+
+  emit(
+    ProfileSaving(
+      currentProfile,
+    ),
+  );
+
+  try {
+    final updatedProfile =
+        await profileRepository
+            .updateProfile(
+      phone: event.phone,
+      email: event.email,
+      imageBytes:
+          event.imageBytes,
+    );
+
+    emit(
+      ProfileSaveSuccess(
+        profile:
+            updatedProfile,
+        message:
+            'تم حفظ بيانات التواصل والصورة بنجاح',
+      ),
+    );
+  } catch (_) {
+    emit(
+      ProfileError(
+        message:
+            'تعذر حفظ التعديلات',
+        profile:
+            currentProfile,
+      ),
+    );
+  }
+}
+  
 
   ProfileModel? _getCurrentProfile(ProfileState state) {
     if (state is ProfileLoaded) {

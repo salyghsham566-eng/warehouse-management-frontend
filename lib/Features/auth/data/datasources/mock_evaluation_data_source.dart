@@ -1,9 +1,11 @@
 import 'package:project_2/Features/auth/data/datasources/evaluation_data_source.dart';
+import 'package:project_2/Features/auth/data/models/evaluation_archive_model.dart';
 import 'package:project_2/Features/auth/data/models/evaluation_coverage_details_model.dart';
 import 'package:project_2/Features/auth/data/models/evaluation_one_time_pharmacies_details_model.dart';
 import 'package:project_2/Features/auth/data/models/evaluation_overview_model.dart';
 import 'package:project_2/Features/auth/data/models/evaluation_repeated_pharmacies_details_model.dart';
 import 'package:project_2/Features/auth/data/models/evaluation_target_details_model.dart';
+import 'package:project_2/Features/auth/data/models/evaluation_work_plans_state.dart';
 
 class MockEvaluationDataSource
     implements EvaluationDataSource {
@@ -1036,5 +1038,506 @@ Future<EvaluationOneTimePharmaciesDetailsModel>
     pharmacies:
         pharmacies,
   );
+}// =========================================================
+// UC-211 - Work Plan Evaluations
+// =========================================================
+
+@override
+Future<List<EvaluationWorkPlanModel>>
+    getWorkPlanEvaluations({
+  required String regionId,
+  required int month,
+  required int year,
+}) async {
+  await Future<void>.delayed(
+    const Duration(
+      milliseconds: 500,
+    ),
+  );
+
+  final String monthValue =
+      month.toString().padLeft(
+            2,
+            '0',
+          );
+
+  final int lastDay =
+      DateTime(
+        year,
+        month + 1,
+        0,
+      ).day;
+
+  final String lastDayValue =
+      lastDay.toString().padLeft(
+            2,
+            '0',
+          );
+
+  switch (regionId) {
+    // =====================================================
+    // المنطقة الشمالية
+    // =====================================================
+
+    case '1':
+      return [
+        EvaluationWorkPlanModel(
+          planId: 101,
+          planName:
+              'خطة تغطية صيدليات المنطقة الشمالية',
+          startDate:
+              '$year-$monthValue-01',
+          endDate:
+              '$year-$monthValue-$lastDayValue',
+          completionPercentage: 94,
+          rating: 'ممتاز',
+        ),
+
+        EvaluationWorkPlanModel(
+          planId: 102,
+          planName:
+              'خطة تنشيط المبيعات',
+          startDate:
+              '$year-$monthValue-05',
+          endDate:
+              '$year-$monthValue-25',
+          completionPercentage: 84,
+          rating: 'جيد جداً',
+        ),
+      ];
+
+    // =====================================================
+    // المنطقة الجنوبية
+    // =====================================================
+
+    case '2':
+      return [
+        EvaluationWorkPlanModel(
+          planId: 201,
+          planName:
+              'خطة متابعة التحصيل',
+          startDate:
+              '$year-$monthValue-01',
+          endDate:
+              '$year-$monthValue-$lastDayValue',
+          completionPercentage: 72,
+          rating: 'جيد',
+        ),
+      ];
+
+    // =====================================================
+    // المنطقة الوسطى
+    // =====================================================
+
+    case '3':
+      return [
+        EvaluationWorkPlanModel(
+          planId: 301,
+          planName:
+              'خطة رفع التغطية',
+          startDate:
+              '$year-$monthValue-01',
+          endDate:
+              '$year-$monthValue-$lastDayValue',
+          completionPercentage: 97,
+          rating: 'ممتاز',
+        ),
+
+        EvaluationWorkPlanModel(
+          planId: 302,
+          planName:
+              'خطة زيادة الزيارات اليومية',
+          startDate:
+              '$year-$monthValue-03',
+          endDate:
+              '$year-$monthValue-24',
+          completionPercentage: 88,
+          rating: 'جيد جداً',
+        ),
+      ];
+
+    // =====================================================
+    // المنطقة الغربية
+    // =====================================================
+
+    case '4':
+      return [
+        EvaluationWorkPlanModel(
+          planId: 401,
+          planName:
+              'خطة متابعة الأصناف المستهدفة',
+          startDate:
+              '$year-$monthValue-01',
+          endDate:
+              '$year-$monthValue-27',
+          completionPercentage: 58,
+          rating: 'سيء',
+        ),
+      ];
+
+    // =====================================================
+    // جميع المناطق
+    // =====================================================
+
+    default:
+      return [
+        EvaluationWorkPlanModel(
+          planId: 1,
+          planName:
+              'خطة تغطية الصيدليات الشهرية',
+          startDate:
+              '$year-$monthValue-01',
+          endDate:
+              '$year-$monthValue-$lastDayValue',
+          completionPercentage: 92,
+          rating: 'ممتاز',
+        ),
+
+        EvaluationWorkPlanModel(
+          planId: 2,
+          planName:
+              'خطة تنشيط المبيعات',
+          startDate:
+              '$year-$monthValue-05',
+          endDate:
+              '$year-$monthValue-25',
+          completionPercentage: 83,
+          rating: 'جيد جداً',
+        ),
+
+        EvaluationWorkPlanModel(
+          planId: 3,
+          planName:
+              'خطة متابعة التحصيل',
+          startDate:
+              '$year-$monthValue-01',
+          endDate:
+              '$year-$monthValue-$lastDayValue',
+          completionPercentage: 71,
+          rating: 'جيد',
+        ),
+      ];
+  }
+}
+// =========================================================
+// UC-212 - Evaluation Archive
+// =========================================================
+
+@override
+Future<List<EvaluationArchiveModel>>
+    getEvaluationArchive({
+  required String regionId,
+  int? month,
+  int? year,
+}) async {
+  await Future<void>.delayed(
+    const Duration(
+      milliseconds: 600,
+    ),
+  );
+
+  final DateTime now =
+      DateTime.now();
+
+  const Map<String, String>
+      regionNames = {
+    'all': 'جميع المناطق',
+    '1': 'المنطقة الشمالية',
+    '2': 'المنطقة الجنوبية',
+    '3': 'المنطقة الوسطى',
+    '4': 'المنطقة الغربية',
+  };
+
+  final String regionName =
+      regionNames[regionId] ??
+          'جميع المناطق';
+
+  // =======================================================
+  // Base scores according to region
+  // =======================================================
+
+  double target;
+  double coverage;
+  double repeated;
+  double oneTime;
+
+  switch (regionId) {
+    case '1':
+      target = 29;
+      coverage = 31;
+      repeated = 16;
+      oneTime = 8;
+      break;
+
+    case '2':
+      target = 25;
+      coverage = 27;
+      repeated = 14;
+      oneTime = 7;
+      break;
+
+    case '3':
+      target = 32;
+      coverage = 33;
+      repeated = 18;
+      oneTime = 9;
+      break;
+
+    case '4':
+      target = 27;
+      coverage = 29;
+      repeated = 15;
+      oneTime = 8;
+      break;
+
+    default:
+      target = 30;
+      coverage = 32;
+      repeated = 17;
+      oneTime = 8;
+  }
+
+  String ratingFromPercentage(
+    double percentage,
+  ) {
+    if (percentage >= 90) {
+      return 'ممتاز';
+    }
+
+    if (percentage >= 80) {
+      return 'جيد جداً';
+    }
+
+    if (percentage >= 65) {
+      return 'جيد';
+    }
+
+    return 'سيء';
+  }
+
+  final List<EvaluationArchiveModel>
+      archive = [];
+
+  // آخر 12 شهر سابق
+  for (
+    int index = 1;
+    index <= 12;
+    index++
+  ) {
+    final DateTime archiveDate =
+        DateTime(
+      now.year,
+      now.month - index,
+      1,
+    );
+
+    // فلتر الشهر
+    if (month != null &&
+        archiveDate.month != month) {
+      continue;
+    }
+
+    // فلتر السنة
+    if (year != null &&
+        archiveDate.year != year) {
+      continue;
+    }
+
+    final int variation =
+        (index - 1) % 4;
+
+    final double monthTarget =
+        (target - variation)
+            .clamp(
+              0,
+              35,
+            )
+            .toDouble();
+
+    final double monthCoverage =
+        (coverage -
+                (variation * 0.8))
+            .clamp(
+              0,
+              35,
+            )
+            .toDouble();
+
+    final double monthRepeated =
+        (repeated -
+                (variation * 0.5))
+            .clamp(
+              0,
+              20,
+            )
+            .toDouble();
+
+    final double monthOneTime =
+        (oneTime -
+                (variation * 0.3))
+            .clamp(
+              0,
+              10,
+            )
+            .toDouble();
+
+    final String monthValue =
+        archiveDate.month
+            .toString()
+            .padLeft(
+              2,
+              '0',
+            );
+
+    final int lastDay =
+        DateTime(
+      archiveDate.year,
+      archiveDate.month + 1,
+      0,
+    ).day;
+
+    final String lastDayValue =
+        lastDay
+            .toString()
+            .padLeft(
+              2,
+              '0',
+            );
+
+    // =====================================================
+    // Work plan evaluations
+    // بعض الأشهر ما فيها تقييم خطط
+    // =====================================================
+
+    final List<EvaluationWorkPlanModel>
+        workPlans = [];
+
+    if (index % 3 != 0) {
+      final double completion =
+          (94 - (variation * 6))
+              .clamp(
+                0,
+                100,
+              )
+              .toDouble();
+
+      workPlans.add(
+        EvaluationWorkPlanModel(
+          planId:
+              archiveDate.year * 10000 +
+                  archiveDate.month * 100 +
+                  1,
+
+          planName:
+              'خطة العمل الشهرية',
+
+          startDate:
+              '${archiveDate.year}-$monthValue-01',
+
+          endDate:
+              '${archiveDate.year}-$monthValue-$lastDayValue',
+
+          completionPercentage:
+              completion,
+
+          rating:
+              ratingFromPercentage(
+            completion,
+          ),
+        ),
+      );
+
+      if (index.isEven) {
+        final double secondCompletion =
+            (86 - (variation * 5))
+                .clamp(
+                  0,
+                  100,
+                )
+                .toDouble();
+
+        workPlans.add(
+          EvaluationWorkPlanModel(
+            planId:
+                archiveDate.year *
+                        10000 +
+                    archiveDate.month *
+                        100 +
+                    2,
+
+            planName:
+                'خطة متابعة المبيعات والتغطية',
+
+            startDate:
+                '${archiveDate.year}-$monthValue-05',
+
+            endDate:
+                '${archiveDate.year}-$monthValue-$lastDayValue',
+
+            completionPercentage:
+                secondCompletion,
+
+            rating:
+                ratingFromPercentage(
+              secondCompletion,
+            ),
+          ),
+        );
+      }
+    }
+
+    archive.add(
+      EvaluationArchiveModel(
+        month:
+            archiveDate.month,
+
+        year:
+            archiveDate.year,
+
+        regionId:
+            regionId,
+
+        regionName:
+            regionName,
+
+        targetScore:
+            EvaluationScoreModel(
+          score:
+              monthTarget,
+          maxScore:
+              35,
+        ),
+
+        coverageScore:
+            EvaluationScoreModel(
+          score:
+              monthCoverage,
+          maxScore:
+              35,
+        ),
+
+        repeatedScore:
+            EvaluationScoreModel(
+          score:
+              monthRepeated,
+          maxScore:
+              20,
+        ),
+
+        oneTimeScore:
+            EvaluationScoreModel(
+          score:
+              monthOneTime,
+          maxScore:
+              10,
+        ),
+
+        workPlanEvaluations:
+            workPlans,
+      ),
+    );
+  }
+
+  return archive;
 }
 }

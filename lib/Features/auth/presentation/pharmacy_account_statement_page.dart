@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:printing/printing.dart';
 import 'package:project_2/Core/di/injection_container.dart';
 import 'package:project_2/Features/auth/bloc/pharmacy_account_statement_bloc.dart';
 import 'package:project_2/Features/auth/bloc/pharmacy_account_statement_event.dart';
@@ -8,6 +7,7 @@ import 'package:project_2/Features/auth/bloc/pharmacy_account_statement_state.da
 import 'package:project_2/Features/auth/data/models/pharmacy_account_statement_model.dart';
 import 'package:project_2/Features/auth/presentation/harmacy_statement_pdf_preview_page.dart';
 import 'package:project_2/Features/auth/services/pharmacy_statement_pdf_service.dart';
+import 'package:project_2/Features/auth/services/statement_pdf_exporter.dart';
 
 class PharmacyAccountStatementPage
     extends StatefulWidget {
@@ -156,7 +156,7 @@ class _PharmacyAccountStatementPageState
           await sl<PharmacyStatementPdfService>()
               .buildPdf(statement);
 
-      await Printing.sharePdf(
+      await exportStatementPdf(
         bytes: pdfBytes,
         filename:
             'pharmacy_statement_${statement.pharmacy.id}.pdf',
@@ -522,7 +522,38 @@ class _StatementMovementsTable
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // على الشاشات الصغيرة لا نحاول ضغط 6 أعمدة داخل عرض الهاتف.
+        // نعرض نفس البيانات كبطاقات مرتبة، بينما يبقى الجدول كما هو
+        // على التابلت والويب/الكمبيوتر.
+        if (constraints.maxWidth < 720) {
+          return _MobileMovementsList(
+            movements: movements,
+          );
+        }
+
+        return _DesktopMovementsTable(
+          movements: movements,
+        );
+      },
+    );
+  }
+}
+
+class _DesktopMovementsTable
+    extends StatelessWidget {
+  final List<PharmacyStatementMovementModel>
+      movements;
+
+  const _DesktopMovementsTable({
+    required this.movements,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(17),
@@ -580,9 +611,7 @@ class _StatementMovementsTable
               return DataRow(
                 cells: [
                   DataCell(
-                    Text(
-                      movement.formattedDate,
-                    ),
+                    Text(movement.formattedDate),
                   ),
                   DataCell(
                     Container(
@@ -608,9 +637,7 @@ class _StatementMovementsTable
                     ),
                   ),
                   DataCell(
-                    Text(
-                      movement.operationNumber,
-                    ),
+                    Text(movement.operationNumber),
                   ),
                   DataCell(
                     Text(
@@ -645,6 +672,205 @@ class _StatementMovementsTable
           ).toList(),
         ),
       ),
+    );
+  }
+}
+
+class _MobileMovementsList extends StatelessWidget {
+  final List<PharmacyStatementMovementModel>
+      movements;
+
+  const _MobileMovementsList({
+    required this.movements,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(
+          color: const Color(0xFFE1E6EF),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
+            color: const Color(0xFF002B55),
+            child: const Text(
+              'الحركات المالية',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          ...List.generate(
+            movements.length,
+            (index) {
+              final movement = movements[index];
+              final typeColor = movement.isInvoice
+                  ? const Color(0xFFC62828)
+                  : const Color(0xFF00875A);
+
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(13),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _MobileMovementField(
+                                label: 'التاريخ',
+                                value:
+                                    movement.formattedDate,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Container(
+                              padding:
+                                  const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: typeColor
+                                    .withOpacity(0.10),
+                                borderRadius:
+                                    BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                movement.movementTypeLabel,
+                                style: TextStyle(
+                                  color: typeColor,
+                                  fontSize: 11,
+                                  fontWeight:
+                                      FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 13),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _MobileMovementField(
+                                label: 'رقم العملية',
+                                value:
+                                    movement.operationNumber,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _MobileMovementField(
+                                label: 'الرصيد',
+                                value:
+                                    movement.formattedBalance,
+                                valueColor:
+                                    const Color(0xFF002B55),
+                                bold: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 13),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _MobileMovementField(
+                                label: 'مدين',
+                                value:
+                                    movement.formattedDebit,
+                                valueColor:
+                                    const Color(0xFFC62828),
+                                bold: true,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _MobileMovementField(
+                                label: 'دائن',
+                                value:
+                                    movement.formattedCredit,
+                                valueColor:
+                                    const Color(0xFF00875A),
+                                bold: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (index != movements.length - 1)
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Color(0xFFE9EDF3),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileMovementField extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final bool bold;
+
+  const _MobileMovementField({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.bold = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF98A2B3),
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: valueColor ??
+                const Color(0xFF344054),
+            fontSize: 12,
+            fontWeight:
+                bold ? FontWeight.bold : FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

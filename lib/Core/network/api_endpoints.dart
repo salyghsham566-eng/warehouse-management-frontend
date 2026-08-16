@@ -94,4 +94,97 @@ static const String
 static const String
     evaluationOneTimePharmaciesDetails =
     '/representative/evaluation/one-time-pharmacies-details';
+// UC-211
+static const String evaluationWorkPlans =
+    '/representative/evaluation/work-plans';
+// UC-212
+static const String evaluationArchive =
+    '/representative/evaluation/archive';
+    // =========================================================
+// Offers & Discounts - UC-213
+// =========================================================
+
+static const String representativeOffers =
+    '/representative/offers';
+    // =========================================================
+// UC-214 -> UC-218
+// =========================================================
+
+static String promotionalBasketDetails(
+  String basketId,
+) {
+  return '/representative/offers/baskets/$basketId';
+}
+// =========================================================
+// UC-220 -> UC-221
+// =========================================================
+
+static const String usedOffersHistory =
+    '/representative/offers/history';
+    static String activeOfferDetails(
+  String offerId,
+) {
+  return '/representative/offers/$offerId';
+}
+    // =========================================================
+    // Warehouse - UC-222
+    // =========================================================
+
+    static const String warehouseOverview =
+        '/representative/warehouse/overview';
+static const String warehouseCompanies =
+    '/representative/warehouse/companies';
+    // UC-225
+static String warehouseCompanyMedicines(
+  String companyId,
+) {
+  return '/representative/warehouse/companies/'
+      '${Uri.encodeComponent(companyId)}/medicines';
+}// UC-227
+static String warehouseMedicineDetails(
+  String medicineId,
+) {
+  return '/representative/warehouse/medicines/'
+      '${Uri.encodeComponent(medicineId)}';
+}// =========================================================
+// UC-230 + UC-231
+// =========================================================
+static const String warehouseItems =
+    '/representative/warehouse/items';
+    // =========================================================
+// UC-232
+// =========================================================
+static const String warehouseInventoryFile =
+    '/representative/warehouse/inventory-file';
+
+// =========================================================
+// UC-233 + UC-234
+// =========================================================
+static String warehouseInventoryFilePdf(
+  String fileId,
+) {
+  return '/representative/warehouse/inventory-file/'
+      '${Uri.encodeComponent(fileId)}/pdf';
+}// =========================================================
+// Pharmacies - UC-235 -> UC-241
+// =========================================================
+static const String representativePharmacies =
+    '/representative/pharmacies';
+    // =========================================================
+// UC-242 -> UC-245
+// =========================================================
+static String representativePharmacyDetails(
+  String pharmacyId,
+) {
+  return '/representative/pharmacies/'
+      '${Uri.encodeComponent(pharmacyId)}';
+
+}// =========================================================
+// Account Management - UC-261 -> UC-266
+// =========================================================
+static const String representativeAccount =
+    '/representative/account';
+    static const String
+    representativeAccountPassword =
+    '/representative/account/password';
 }

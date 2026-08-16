@@ -3,9 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_2/Core/di/injection_container.dart';
 import 'package:project_2/Features/auth/bloc/evaluation_bloc.dart';
 import 'package:project_2/Features/auth/bloc/evaluation_event.dart';
+import 'package:project_2/Features/auth/bloc/offers_bloc.dart';
+import 'package:project_2/Features/auth/bloc/offers_event.dart';
 import 'package:project_2/Features/auth/bloc/work_plans_bloc.dart';
 import 'package:project_2/Features/auth/bloc/work_plans_event.dart';
+import 'package:project_2/Features/auth/bloc/warehouse_bloc.dart';
+import 'package:project_2/Features/auth/bloc/warehouse_event.dart';
 import 'package:project_2/Features/auth/presentation/evaluation_screen.dart';
+import 'package:project_2/Features/auth/presentation/representative_offers_screen.dart';
+import 'package:project_2/Features/auth/presentation/representative_pharmacies_screen.dart';
+import 'package:project_2/Features/auth/presentation/warehouse_screen.dart';
 import 'package:project_2/work_plans_screen.dart';
 
 class MoreScreen extends StatelessWidget {
@@ -67,7 +74,72 @@ _MoreOption(
     );
   },
 ),
-      // لاحقاً منضيف باقي أقسام "المزيد" هون.
+_MoreOption(
+  title:
+      'العروض والحسومات',
+
+  subtitle:
+      'العروض الفعالة والسلال الترويجية',
+
+  icon:
+      Icons.local_offer_outlined,
+
+  onTap: () {
+    Navigator.push(
+      context,
+
+      MaterialPageRoute(
+        builder: (_) {
+          return BlocProvider<
+              OffersBloc>(
+            create: (_) =>
+                sl<OffersBloc>()
+                  ..add(
+                    LoadOffersEvent(),
+                  ),
+
+            child:
+                const RepresentativeOffersScreen(),
+          );
+        },
+      ),
+    );
+  },
+),
+_MoreOption(
+  title: 'المستودع',
+  subtitle: 'الجرد وحالة توفر الأصناف',
+  icon: Icons.warehouse_outlined,
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) {
+          return BlocProvider<WarehouseBloc>(
+            create: (_) =>
+                sl<WarehouseBloc>()
+                  ..add(
+                    LoadWarehouseOverviewEvent(),
+                  ),
+            child: const WarehouseScreen(),
+          );
+        },
+      ),
+    );
+  },
+),
+   _MoreOption(
+  title: 'الصيدليات',
+  subtitle:
+      'استعراض الصيدليات والتارغت',
+  icon: Icons.local_pharmacy_outlined,
+  onTap: () {
+    Navigator.push(
+      context,
+      representativePharmaciesRoute(),
+    );
+  },
+),   // لاحقاً منضيف باقي أقسام "المزيد" هون.
     ];
 
     return Directionality(

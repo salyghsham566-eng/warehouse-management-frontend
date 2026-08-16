@@ -1,406 +1,560 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+
+import 'package:project_2/Core/theme/app_colors.dart';
+
 import 'package:project_2/Features/auth/bloc/profile_bloc.dart';
 import 'package:project_2/Features/auth/bloc/profile_event.dart';
 import 'package:project_2/Features/auth/bloc/profile_state.dart';
-import 'package:project_2/Features/auth/data/models/profile_model.dart';
 
-class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+import 'package:project_2/Features/auth/data/models/profile_model.dart';
+import 'package:project_2/Features/auth/presentation/change_password_screen.dart';
+
+class ProfilePage
+    extends StatefulWidget {
+  const ProfilePage({
+    super.key,
+  });
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  State<ProfilePage> createState() =>
+      _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
-  final _formKey = GlobalKey<FormState>();
+class _ProfilePageState
+    extends State<ProfilePage> {
+  final _formKey =
+      GlobalKey<FormState>();
 
-  late final TextEditingController _usernameController;
-  late final TextEditingController _phoneController;
-  late final TextEditingController _addressController;
-  late final TextEditingController _birthDateController;
+  final _imagePicker =
+      ImagePicker();
 
-  final TextEditingController _passwordController = TextEditingController();
+  late final TextEditingController
+      _phoneController;
 
-  late String _selectedGovernorate;
+  late final TextEditingController
+      _emailController;
 
-  bool _obscurePassword = true;
-  bool _controllersInitialized = false;
+  Uint8List? _selectedImageBytes;
 
-  final List<String> _governorates = [
-    "دمشق",
-    "ريف دمشق",
-    "حلب",
-    "حمص",
-    "حماة",
-    "اللاذقية",
-    "طرطوس",
-    "درعا",
-    "السويداء",
-    "القنيطرة",
-    "إدلب",
-    "دير الزور",
-    "الرقة",
-    "الحسكة",
-  ];
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
 
-    _usernameController = TextEditingController();
-    _phoneController = TextEditingController();
-    _addressController = TextEditingController();
-    _birthDateController = TextEditingController();
+    _phoneController =
+        TextEditingController();
 
-    _selectedGovernorate = _governorates.first;
-  }
-
-  void _fillControllers(ProfileModel profile) {
-    if (_controllersInitialized) return;
-
-    _usernameController.text = profile.username;
-    _phoneController.text = profile.phone;
-    _addressController.text = profile.address;
-    _birthDateController.text = profile.birthDate;
-
-    if (_governorates.contains(profile.governorate)) {
-      _selectedGovernorate = profile.governorate;
-    } else {
-      _selectedGovernorate = _governorates.first;
-    }
-
-    _controllersInitialized = true;
+    _emailController =
+        TextEditingController();
   }
 
   @override
   void dispose() {
-    _usernameController.dispose();
     _phoneController.dispose();
-    _addressController.dispose();
-    _birthDateController.dispose();
-    _passwordController.dispose();
+    _emailController.dispose();
 
     super.dispose();
   }
 
-  Future<void> _selectBirthDate() async {
-    final DateTime initialDate =
-        DateTime.tryParse(_birthDateController.text) ?? DateTime(2000);
-
-    const appBlue = Color(0xFF12355B);
-
-    final DateTime? selectedDate = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(1940),
-      lastDate: DateTime.now(),
-      helpText: "اختر تاريخ الميلاد",
-      cancelText: "إلغاء",
-      confirmText: "اختيار",
-
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: appBlue,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(foregroundColor: appBlue),
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (selectedDate == null) return;
-
-    setState(() {
-      _birthDateController.text =
-          "${selectedDate.year}-"
-          "${selectedDate.month.toString().padLeft(2, '0')}-"
-          "${selectedDate.day.toString().padLeft(2, '0')}";
-    });
-  }
-
-  void _saveProfile() {
-    if (!_formKey.currentState!.validate()) {
+  void _sync(
+    ProfileModel profile, {
+    bool force = false,
+  }) {
+    if (_initialized &&
+        !force) {
       return;
     }
 
-    context.read<ProfileBloc>().add(
-      ProfileUpdateRequested(
-        username: _usernameController.text.trim(),
-        phone: _phoneController.text.trim(),
-        address: _addressController.text.trim(),
-        governorate: _selectedGovernorate,
-        birthDate: _birthDateController.text.trim(),
-        password: _passwordController.text.trim().isEmpty
-            ? null
-            : _passwordController.text.trim(),
-      ),
-    );
+    _phoneController.text =
+        profile.phone;
+
+    _emailController.text =
+        profile.email;
+
+    _selectedImageBytes =
+        profile.imageBytes;
+
+    _initialized = true;
   }
 
-  void _changeProfileImage() {
-    // لاحقاً نضع image_picker هنا.
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("سيتم فتح اختيار الصورة هنا")));
+  Future<void> _pickImage() async {
+    try {
+      final image =
+          await _imagePicker.pickImage(
+        source:
+            ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1200,
+      );
+
+      if (image == null) {
+        return;
+      }
+
+      final bytes =
+          await image.readAsBytes();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _selectedImageBytes =
+            bytes;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'تعذر اختيار صورة الحساب',
+          ),
+        ),
+      );
+    }
+  }
+
+  void _save() {
+    if (!(
+      _formKey.currentState
+              ?.validate() ??
+          false
+    )) {
+      return;
+    }
+
+    context
+        .read<ProfileBloc>()
+        .add(
+          ProfileUpdateRequested(
+            phone:
+                _phoneController
+                    .text
+                    .trim(),
+
+            email:
+                _emailController
+                    .text
+                    .trim(),
+
+            imageBytes:
+                _selectedImageBytes,
+          ),
+        );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection:
+          TextDirection.rtl,
+
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor:
+            AppColors.background,
+
         appBar: AppBar(
-          title: const Text("الملف الشخصي"),
+          backgroundColor:
+              Colors.white,
+
+          surfaceTintColor:
+              Colors.white,
+
+          foregroundColor:
+              AppColors.primary,
+
           centerTitle: true,
-          backgroundColor: Colors.white,
+
+          title: const Text(
+            'إدارة الحساب',
+
+            style: TextStyle(
+              color:
+                  AppColors.textPrimary,
+
+              fontSize: 20,
+
+              fontWeight:
+                  FontWeight.w800,
+            ),
+          ),
         ),
-        body: BlocConsumer<ProfileBloc, ProfileState>(
-          listener: (context, state) {
-            if (state is ProfileSaveSuccess) {
-              _passwordController.clear();
+
+        body: BlocConsumer<
+            ProfileBloc,
+            ProfileState>(
+          listener:
+              (context, state) {
+            if (state
+                is ProfileSaveSuccess) {
+              _sync(
+                state.profile,
+                force: true,
+              );
 
               ScaffoldMessenger.of(
                 context,
-              ).showSnackBar(SnackBar(content: Text(state.message)));
+              ).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.message,
+                  ),
+                ),
+              );
             }
 
-            if (state is ProfileError) {
+            if (state
+                is ProfileError) {
               ScaffoldMessenger.of(
                 context,
-              ).showSnackBar(SnackBar(content: Text(state.message)));
+              ).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.message,
+                  ),
+                ),
+              );
             }
           },
-          builder: (context, state) {
-            if (state is ProfileInitial || state is ProfileLoading) {
+
+          builder:
+              (context, state) {
+            if (state
+                    is ProfileInitial ||
+                state
+                    is ProfileLoading) {
               return const Center(
-                child: CircularProgressIndicator(color: Color(0xFF12355B)),
+                child:
+                    CircularProgressIndicator(),
               );
             }
 
             ProfileModel? profile;
-            bool isSaving = false;
 
-            if (state is ProfileLoaded) {
-              profile = state.profile;
-            } else if (state is ProfileSaving) {
-              profile = state.profile;
-              isSaving = true;
-            } else if (state is ProfileSaveSuccess) {
-              profile = state.profile;
-            } else if (state is ProfileError) {
-              profile = state.profile;
+            bool saving = false;
+
+            if (state
+                is ProfileLoaded) {
+              profile =
+                  state.profile;
+            }
+
+            if (state
+                is ProfileSaving) {
+              profile =
+                  state.profile;
+
+              saving = true;
+            }
+
+            if (state
+                is ProfileSaveSuccess) {
+              profile =
+                  state.profile;
+            }
+
+            if (state
+                is ProfileError) {
+              profile =
+                  state.profile;
             }
 
             if (profile == null) {
               return Center(
-                child: ElevatedButton(
+                child:
+                    ElevatedButton.icon(
                   onPressed: () {
-                    context.read<ProfileBloc>().add(ProfileRequested());
+                    context
+                        .read<
+                            ProfileBloc>()
+                        .add(
+                          ProfileRequested(),
+                        );
                   },
-                  child: const Text("إعادة المحاولة"),
+
+                  icon:
+                      const Icon(
+                    Icons.refresh,
+                  ),
+
+                  label:
+                      const Text(
+                    'إعادة المحاولة',
+                  ),
                 ),
               );
             }
 
-            _fillControllers(profile);
+            _sync(profile);
 
-            return SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      _buildProfileImage(),
+            return Form(
+              key: _formKey,
 
-                      const SizedBox(height: 25),
+              child: ListView(
+                padding:
+                    const EdgeInsets
+                        .fromLTRB(
+                  16,
+                  16,
+                  16,
+                  30,
+                ),
 
-                      _buildSectionTitle("البيانات الشخصية"),
+                children: [
+                  _buildHeader(
+                    profile,
+                    saving,
+                  ),
 
-                      const SizedBox(height: 15),
+                  const SizedBox(
+                    height: 12,
+                  ),
 
-                      _buildTextField(
-                        controller: _usernameController,
-                        label: "اسم المستخدم",
-                        icon: Icons.person_outline,
-                        enabled: profile.canEditUsername,
+                  _buildNotice(),
+
+                  const SizedBox(
+                    height: 20,
+                  ),
+
+                  _buildTitle(
+                    'الملف الشخصي',
+                    Icons
+                        .badge_outlined,
+                  ),
+
+                  const SizedBox(
+                    height: 10,
+                  ),
+
+                  _buildCard(
+                    [
+                      _buildInfoRow(
+                        'الاسم',
+                        profile.fullName,
+                        Icons
+                            .person_outline,
                       ),
 
-                      if (!profile.canEditUsername)
-                        const Padding(
-                          padding: EdgeInsets.only(right: 8, bottom: 12),
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              "لا تملك صلاحية تعديل اسم المستخدم.",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ),
-                        ),
+                      _divider(),
 
-                      _buildTextField(
-                        controller: _phoneController,
-                        label: "رقم الهاتف",
-                        icon: Icons.phone_outlined,
-                        keyboardType: TextInputType.phone,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return "يرجى إدخال رقم الهاتف";
-                          }
-
-                          if (value.trim().length < 8) {
-                            return "رقم الهاتف غير صحيح";
-                          }
-
-                          return null;
-                        },
+                      _buildInfoRow(
+                        'كود المندوب',
+                        profile
+                            .representativeCode,
+                        Icons
+                            .qr_code_2,
                       ),
 
-                      _buildTextField(
-                        controller: _passwordController,
-                        label: "كلمة مرور جديدة",
-                        icon: Icons.lock_outline,
-                        obscureText: _obscurePassword,
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value != null &&
-                              value.isNotEmpty &&
-                              value.length < 6) {
-                            return "يجب أن تتكون كلمة المرور من 6 محارف على الأقل";
-                          }
+                      _divider(),
 
-                          return null;
-                        },
+                      _buildInfoRow(
+                        'الدور',
+                        profile.role,
+                        Icons
+                            .manage_accounts_outlined,
                       ),
 
-                      const Padding(
-                        padding: EdgeInsets.only(right: 8, bottom: 12),
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            "اترك الحقل فارغاً إن لم ترغب بتغيير كلمة المرور.",
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                        ),
-                      ),
+                      _divider(),
 
-                      _buildTextField(
-                        controller: _addressController,
-                        label: "مكان السكن",
-                        icon: Icons.home_outlined,
-                        maxLines: 2,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return "يرجى إدخال مكان السكن";
-                          }
-
-                          return null;
-                        },
-                      ),
-
-                      _buildGovernorateDropdown(),
-
-                      const SizedBox(height: 15),
-
-                      TextFormField(
-                        controller: _birthDateController,
-                        readOnly: true,
-                        onTap: _selectBirthDate,
-                        decoration: InputDecoration(
-                          labelText: "تاريخ الميلاد",
-                          prefixIcon: const Icon(Icons.calendar_month_outlined),
-                          suffixIcon: const Icon(Icons.arrow_drop_down),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "يرجى اختيار تاريخ الميلاد";
-                          }
-
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 30),
-
-                      _buildSectionTitle("البيانات الإدارية"),
-
-                      const SizedBox(height: 15),
-
-                      _buildReadOnlyField(
-                        label: "الاسم الكامل",
-                        value: profile.fullName,
-                        icon: Icons.badge_outlined,
-                      ),
-
-                      _buildReadOnlyField(
-                        label: "الدور",
-                        value: profile.role,
-                        icon: Icons.manage_accounts_outlined,
-                      ),
-
-                      _buildReadOnlyField(
-                        label: "حالة الحساب",
-                        value: profile.accountStatus,
-                        icon: Icons.verified_user_outlined,
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      SizedBox(
-                        width: double.infinity,
-                        height: 55,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Color(0xFF12355B),
-                            disabledBackgroundColor: Colors.grey.shade300,
-                            disabledForegroundColor: Color(0xFF12355B),
-                          ),
-                          onPressed: isSaving ? null : _saveProfile,
-                          icon: isSaving
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Color(0xFF12355B),
-                                  ),
-                                )
-                              : const Icon(Icons.save_outlined),
-                          label: Text(
-                            isSaving ? "جارٍ الحفظ..." : "حفظ التعديلات",
-                          ),
-                        ),
+                      _buildStatusRow(
+                        profile
+                            .accountStatus,
                       ),
                     ],
                   ),
-                ),
+
+                  const SizedBox(
+                    height: 20,
+                  ),
+
+                  _buildTitle(
+                    'بيانات التواصل',
+                    Icons
+                        .contact_phone_outlined,
+                  ),
+
+                  const SizedBox(
+                    height: 10,
+                  ),
+
+                  _buildContactCard(
+                    profile,
+                    saving,
+                  ),
+const SizedBox(
+  height: 20,
+),
+
+_buildTitle(
+  'إعدادات الحساب',
+  Icons.settings_outlined,
+),
+
+const SizedBox(
+  height: 10,
+),
+
+Container(
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius:
+        BorderRadius.circular(18),
+    border: Border.all(
+      color: AppColors.border,
+    ),
+  ),
+  child: ListTile(
+    leading: Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color:
+            AppColors.primarySoft,
+        borderRadius:
+            BorderRadius.circular(12),
+      ),
+      child: const Icon(
+        Icons.lock_reset_rounded,
+        color: AppColors.primary,
+      ),
+    ),
+    title: const Text(
+      'تغيير كلمة المرور',
+      style: TextStyle(
+        color:
+            AppColors.textPrimary,
+        fontWeight:
+            FontWeight.w700,
+      ),
+    ),
+    subtitle: const Text(
+      'تحديث كلمة مرور الحساب',
+    ),
+    trailing: const Icon(
+      Icons.arrow_forward_ios_rounded,
+      size: 16,
+      color:
+          AppColors.textSecondary,
+    ),
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              const ChangePasswordScreen(),
+        ),
+      );
+    },
+  ),
+),
+                  const SizedBox(
+                    height: 20,
+                  ),
+
+                  _buildTitle(
+                    'المناطق المرتبطة',
+                    Icons
+                        .map_outlined,
+                  ),
+
+                  const SizedBox(
+                    height: 10,
+                  ),
+
+                  _buildRegionsCard(
+                    profile
+                        .linkedRegions,
+                  ),
+
+                  const SizedBox(
+                    height: 20,
+                  ),
+
+                  _buildTitle(
+                    'الصلاحيات المختصرة',
+                    Icons
+                        .verified_user_outlined,
+                  ),
+
+                  const SizedBox(
+                    height: 10,
+                  ),
+
+                  _buildPermissionsCard(
+                    profile.permissions,
+                  ),
+
+                  const SizedBox(
+                    height: 24,
+                  ),
+
+                  SizedBox(
+                    height: 52,
+
+                    child:
+                        ElevatedButton.icon(
+                      onPressed:
+                          saving
+                              ? null
+                              : _save,
+
+                      style:
+                          ElevatedButton
+                              .styleFrom(
+                        backgroundColor:
+                            AppColors
+                                .primary,
+
+                        foregroundColor:
+                            Colors.white,
+
+                        shape:
+                            RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius
+                                  .circular(
+                            15,
+                          ),
+                        ),
+                      ),
+
+                      icon: saving
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child:
+                                  CircularProgressIndicator(
+                                strokeWidth:
+                                    2,
+                                color:
+                                    Colors.white,
+                              ),
+                            )
+                          : const Icon(
+                              Icons
+                                  .save_outlined,
+                            ),
+
+                      label: Text(
+                        saving
+                            ? 'جاري الحفظ...'
+                            : 'حفظ بيانات التواصل',
+                      ),
+                    ),
+                  ),
+                ],
               ),
             );
           },
@@ -409,106 +563,969 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildProfileImage() {
-    return Stack(
-      alignment: Alignment.bottomLeft,
+  Widget _buildHeader(
+    ProfileModel profile,
+    bool saving,
+  ) {
+    final bytes =
+        _selectedImageBytes ??
+        profile.imageBytes;
+
+    ImageProvider? image;
+
+    if (bytes != null &&
+        bytes.isNotEmpty) {
+      image =
+          MemoryImage(bytes);
+    } else if (
+        profile.imageUrl
+                ?.trim()
+                .isNotEmpty ==
+            true) {
+      image =
+          NetworkImage(
+        profile.imageUrl!,
+      );
+    }
+
+    return Container(
+      padding:
+          const EdgeInsets.all(
+        18,
+      ),
+
+      decoration:
+          BoxDecoration(
+        gradient:
+            const LinearGradient(
+          begin:
+              Alignment.topRight,
+
+          end:
+              Alignment.bottomLeft,
+
+          colors: [
+            Color(
+              0xFF12355B,
+            ),
+            Color(
+              0xFF1F5C8F,
+            ),
+          ],
+        ),
+
+        borderRadius:
+            BorderRadius.circular(
+          20,
+        ),
+      ),
+
+      child: Row(
+        children: [
+          Stack(
+            clipBehavior:
+                Clip.none,
+
+            children: [
+              CircleAvatar(
+                radius: 39,
+
+                backgroundColor:
+                    Colors.white,
+
+                backgroundImage:
+                    image,
+
+                child: image == null
+                    ? const Icon(
+                        Icons.person,
+                        size: 44,
+                        color:
+                            AppColors
+                                .primary,
+                      )
+                    : null,
+              ),
+
+              Positioned(
+                left: -5,
+                bottom: -5,
+
+                child: Material(
+                  color:
+                      Colors.white,
+
+                  shape:
+                      const CircleBorder(),
+
+                  child:
+                      IconButton(
+                    onPressed:
+                        saving
+                            ? null
+                            : _pickImage,
+
+                    icon:
+                        const Icon(
+                      Icons
+                          .camera_alt_outlined,
+
+                      color:
+                          AppColors
+                              .primary,
+
+                      size: 19,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(
+            width: 16,
+          ),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment
+                      .start,
+
+              children: [
+                Text(
+                  profile.fullName,
+
+                  style:
+                      const TextStyle(
+                    color:
+                        Colors.white,
+
+                    fontSize: 19,
+
+                    fontWeight:
+                        FontWeight
+                            .w800,
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 5,
+                ),
+
+                Text(
+                  '${profile.role} • '
+                  '${profile.representativeCode}',
+
+                  style:
+                      const TextStyle(
+                    color:
+                        Color(
+                      0xFFD8E5F2,
+                    ),
+
+                    fontSize:
+                        12.5,
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 8,
+                ),
+
+                Text(
+                  profile
+                      .accountStatus,
+
+                  style:
+                      const TextStyle(
+                    color:
+                        Colors.white,
+
+                    fontSize:
+                        11.5,
+
+                    fontWeight:
+                        FontWeight
+                            .w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotice() {
+    return Container(
+      padding:
+          const EdgeInsets.all(
+        13,
+      ),
+
+      decoration:
+          BoxDecoration(
+        color:
+            AppColors.primarySoft,
+
+        borderRadius:
+            BorderRadius.circular(
+          14,
+        ),
+      ),
+
+      child: const Row(
+        crossAxisAlignment:
+            CrossAxisAlignment
+                .start,
+
+        children: [
+          Icon(
+            Icons
+                .info_outline,
+
+            color:
+                AppColors.primary,
+
+            size: 20,
+          ),
+
+          SizedBox(
+            width: 9,
+          ),
+
+          Expanded(
+            child: Text(
+              'يمكن تعديل رقم الهاتف والبريد الإلكتروني '
+              'وصورة الحساب فقط. الاسم والكود والدور '
+              'والمناطق والصلاحيات للقراءة فقط.',
+
+              style: TextStyle(
+                color:
+                    AppColors
+                        .textPrimary,
+
+                fontSize:
+                    12.5,
+
+                height: 1.5,
+
+                fontWeight:
+                    FontWeight
+                        .w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTitle(
+    String text,
+    IconData icon,
+  ) {
+    return Row(
       children: [
-        const CircleAvatar(radius: 60, child: Icon(Icons.person, size: 70)),
-        Material(
-          color: Theme.of(context).colorScheme.primary,
-          shape: const CircleBorder(),
-          child: IconButton(
-            onPressed: _changeProfileImage,
-            icon: const Icon(Icons.camera_alt_outlined, color: Colors.white),
+        Icon(
+          icon,
+          color:
+              AppColors.primary,
+          size: 21,
+        ),
+
+        const SizedBox(
+          width: 7,
+        ),
+
+        Text(
+          text,
+
+          style:
+              const TextStyle(
+            color:
+                AppColors
+                    .textPrimary,
+
+            fontSize: 17,
+
+            fontWeight:
+                FontWeight.w800,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Align(
-      alignment: Alignment.centerRight,
+  Widget _buildCard(
+    List<Widget> children,
+  ) {
+    return Container(
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 15,
+        vertical: 3,
+      ),
+
+      decoration:
+          BoxDecoration(
+        color: Colors.white,
+
+        borderRadius:
+            BorderRadius.circular(
+          18,
+        ),
+
+        border: Border.all(
+          color:
+              AppColors.border,
+        ),
+      ),
+
+      child:
+          Column(
+        children:
+            children,
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(
+    String label,
+    String value,
+    IconData icon,
+  ) {
+    return Padding(
+      padding:
+          const EdgeInsets.symmetric(
+        vertical: 13,
+      ),
+
+      child: Row(
+        crossAxisAlignment:
+            CrossAxisAlignment
+                .start,
+
+        children: [
+          Icon(
+            icon,
+            color:
+                AppColors.primary,
+            size: 21,
+          ),
+
+          const SizedBox(
+            width: 10,
+          ),
+
+          SizedBox(
+            width: 105,
+
+            child: Text(
+              label,
+
+              style:
+                  const TextStyle(
+                color:
+                    AppColors
+                        .textSecondary,
+
+                fontSize:
+                    12.5,
+
+                fontWeight:
+                    FontWeight
+                        .w600,
+              ),
+            ),
+          ),
+
+          const SizedBox(
+            width: 8,
+          ),
+
+          Expanded(
+            child: Text(
+              value
+                      .trim()
+                      .isEmpty
+                  ? 'غير محدد'
+                  : value,
+
+              textAlign:
+                  TextAlign.left,
+
+              style:
+                  const TextStyle(
+                color:
+                    AppColors
+                        .textPrimary,
+
+                fontSize:
+                    13.5,
+
+                fontWeight:
+                    FontWeight
+                        .w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusRow(
+    String status,
+  ) {
+    final bool active =
+        status.contains(
+      'فعال',
+    );
+
+    final Color color =
+        active
+            ? AppColors
+                .success
+            : AppColors
+                .warning;
+
+    return Padding(
+      padding:
+          const EdgeInsets.symmetric(
+        vertical: 13,
+      ),
+
+      child: Row(
+        children: [
+          const Icon(
+            Icons
+                .verified_user_outlined,
+
+            color:
+                AppColors.primary,
+
+            size: 21,
+          ),
+
+          const SizedBox(
+            width: 10,
+          ),
+
+          const SizedBox(
+            width: 105,
+
+            child: Text(
+              'حالة الحساب',
+
+              style:
+                  TextStyle(
+                color:
+                    AppColors
+                        .textSecondary,
+
+                fontSize:
+                    12.5,
+
+                fontWeight:
+                    FontWeight
+                        .w600,
+              ),
+            ),
+          ),
+
+          const SizedBox(
+            width: 8,
+          ),
+
+          Container(
+            padding:
+                const EdgeInsets
+                    .symmetric(
+              horizontal: 10,
+              vertical: 6,
+            ),
+
+            decoration:
+                BoxDecoration(
+              color:
+                  color.withOpacity(
+                0.10,
+              ),
+
+              borderRadius:
+                  BorderRadius
+                      .circular(
+                10,
+              ),
+            ),
+
+            child: Text(
+              status,
+
+              style: TextStyle(
+                color: color,
+
+                fontSize: 12,
+
+                fontWeight:
+                    FontWeight
+                        .w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactCard(
+    ProfileModel profile,
+    bool saving,
+  ) {
+    return Container(
+      padding:
+          const EdgeInsets.all(
+        15,
+      ),
+
+      decoration:
+          BoxDecoration(
+        color: Colors.white,
+
+        borderRadius:
+            BorderRadius.circular(
+          18,
+        ),
+
+        border: Border.all(
+          color:
+              AppColors.border,
+        ),
+      ),
+
+      child: Column(
+        children: [
+          TextFormField(
+            controller:
+                _phoneController,
+
+            enabled:
+                !saving,
+
+            keyboardType:
+                TextInputType
+                    .phone,
+
+            decoration:
+                _inputDecoration(
+              'رقم الهاتف',
+              Icons
+                  .phone_outlined,
+            ),
+
+            validator:
+                (value) {
+              final text =
+                  value?.trim() ??
+                  '';
+
+              if (text.isEmpty) {
+                return 'يرجى إدخال رقم الهاتف';
+              }
+
+              if (text.length <
+                  8) {
+                return 'رقم الهاتف غير صحيح';
+              }
+
+              return null;
+            },
+          ),
+
+          const SizedBox(
+            height: 12,
+          ),
+
+          TextFormField(
+            controller:
+                _emailController,
+
+            enabled:
+                !saving,
+
+            keyboardType:
+                TextInputType
+                    .emailAddress,
+
+            decoration:
+                _inputDecoration(
+              'البريد الإلكتروني',
+              Icons
+                  .email_outlined,
+            ),
+
+            validator:
+                (value) {
+              final text =
+                  value?.trim() ??
+                  '';
+
+              if (text.isEmpty) {
+                return 'يرجى إدخال البريد الإلكتروني';
+              }
+
+              if (!RegExp(
+                r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+              ).hasMatch(text)) {
+                return 'البريد الإلكتروني غير صحيح';
+              }
+
+              return null;
+            },
+          ),
+
+          const SizedBox(
+            height: 12,
+          ),
+
+          _buildReadOnlyBox(
+            'العنوان',
+            profile.address,
+            Icons
+                .home_outlined,
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration
+      _inputDecoration(
+    String label,
+    IconData icon,
+  ) {
+    return InputDecoration(
+      labelText: label,
+
+      prefixIcon:
+          Icon(icon),
+
+      border:
+          OutlineInputBorder(
+        borderRadius:
+            BorderRadius.circular(
+          14,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReadOnlyBox(
+    String label,
+    String value,
+    IconData icon,
+  ) {
+    return Container(
+      width:
+          double.infinity,
+
+      padding:
+          const EdgeInsets.all(
+        13,
+      ),
+
+      decoration:
+          BoxDecoration(
+        color:
+            AppColors.background,
+
+        borderRadius:
+            BorderRadius.circular(
+          14,
+        ),
+
+        border: Border.all(
+          color:
+              AppColors.border,
+        ),
+      ),
+
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color:
+                AppColors
+                    .textSecondary,
+          ),
+
+          const SizedBox(
+            width: 10,
+          ),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment
+                      .start,
+
+              children: [
+                Text(
+                  label,
+
+                  style:
+                      const TextStyle(
+                    color:
+                        AppColors
+                            .textSecondary,
+
+                    fontSize:
+                        11.5,
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 4,
+                ),
+
+                Text(
+                  value
+                          .trim()
+                          .isEmpty
+                      ? 'غير متوفر'
+                      : value,
+
+                  style:
+                      const TextStyle(
+                    color:
+                        AppColors
+                            .textPrimary,
+
+                    fontSize:
+                        13,
+
+                    fontWeight:
+                        FontWeight
+                            .w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const Icon(
+            Icons
+                .lock_outline,
+
+            color:
+                AppColors
+                    .textSecondary,
+
+            size: 17,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRegionsCard(
+    List<ProfileRegionModel>
+        regions,
+  ) {
+    if (regions.isEmpty) {
+      return _buildEmptyCard(
+        'لا توجد مناطق مرتبطة بالحساب',
+      );
+    }
+
+    return Container(
+      decoration:
+          BoxDecoration(
+        color: Colors.white,
+
+        borderRadius:
+            BorderRadius.circular(
+          18,
+        ),
+
+        border: Border.all(
+          color:
+              AppColors.border,
+        ),
+      ),
+
+      child: Column(
+        children:
+            List.generate(
+          regions.length,
+          (index) {
+            final region =
+                regions[index];
+
+            return Column(
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(
+                    Icons
+                        .location_on_outlined,
+
+                    color:
+                        AppColors
+                            .primary,
+                  ),
+
+                  title: Text(
+                    region.name,
+                  ),
+
+                  subtitle:
+                      Text(
+                    region.pharmaciesCount ==
+                            null
+                        ? 'عدد الصيدليات غير متوفر'
+                        : '${region.pharmaciesCount} صيدلية',
+                  ),
+
+                  trailing:
+                      const Icon(
+                    Icons
+                        .lock_outline,
+
+                    size: 18,
+                  ),
+                ),
+
+                if (index !=
+                    regions.length -
+                        1)
+                  _divider(),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPermissionsCard(
+    List<String> permissions,
+  ) {
+    if (permissions.isEmpty) {
+      return _buildEmptyCard(
+        'لا توجد صلاحيات متاحة للعرض',
+      );
+    }
+
+    return Container(
+      width:
+          double.infinity,
+
+      padding:
+          const EdgeInsets.all(
+        15,
+      ),
+
+      decoration:
+          BoxDecoration(
+        color: Colors.white,
+
+        borderRadius:
+            BorderRadius.circular(
+          18,
+        ),
+
+        border: Border.all(
+          color:
+              AppColors.border,
+        ),
+      ),
+
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+
+        children:
+            permissions
+                .map(
+                  (
+                    permission,
+                  ) =>
+                      Chip(
+                    avatar:
+                        const Icon(
+                      Icons
+                          .check_circle_outline,
+
+                      size: 17,
+
+                      color:
+                          AppColors
+                              .success,
+                    ),
+
+                    label:
+                        Text(
+                      permission,
+                    ),
+
+                    backgroundColor:
+                        AppColors
+                            .successSoft,
+
+                    side:
+                        BorderSide
+                            .none,
+                  ),
+                )
+                .toList(),
+      ),
+    );
+  }
+
+  Widget _buildEmptyCard(
+    String text,
+  ) {
+    return Container(
+      width:
+          double.infinity,
+
+      padding:
+          const EdgeInsets.all(
+        20,
+      ),
+
+      decoration:
+          BoxDecoration(
+        color: Colors.white,
+
+        borderRadius:
+            BorderRadius.circular(
+          18,
+        ),
+
+        border: Border.all(
+          color:
+              AppColors.border,
+        ),
+      ),
+
       child: Text(
-        title,
-        style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+        text,
+        textAlign:
+            TextAlign.center,
       ),
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool enabled = true,
-    bool obscureText = false,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-    Widget? suffixIcon,
-    String? Function(String?)? validator,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: TextFormField(
-        controller: controller,
-        enabled: enabled,
-        obscureText: obscureText,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        validator: validator,
-        decoration: InputDecoration(
-          focusColor: const Color(0xFF12355B),
-          labelText: label,
-          prefixIcon: Icon(icon),
-          suffixIcon: suffixIcon,
-          filled: !enabled,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGovernorateDropdown() {
-    return DropdownButtonFormField<String>(
-      value: _selectedGovernorate,
-      decoration: InputDecoration(
-        labelText: "المحافظة",
-        prefixIcon: const Icon(Icons.location_city_outlined),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-      ),
-      items: _governorates.map((governorate) {
-        return DropdownMenuItem<String>(
-          value: governorate,
-          child: Text(governorate),
-        );
-      }).toList(),
-      onChanged: (value) {
-        if (value == null) return;
-
-        setState(() {
-          _selectedGovernorate = value;
-        });
-      },
-    );
-  }
-
-  Widget _buildReadOnlyField({
-    required String label,
-    required String value,
-    required IconData icon,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: TextFormField(
-        initialValue: value,
-        enabled: false,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon),
-          filled: true,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-        ),
-      ),
+  Widget _divider() {
+    return const Divider(
+      height: 1,
+      color:
+          AppColors.border,
     );
   }
 }

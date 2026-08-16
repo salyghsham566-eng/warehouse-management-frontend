@@ -1,19 +1,92 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_2/Core/di/injection_container.dart';
+import 'package:project_2/Core/theme/app_colors.dart';
 import 'package:project_2/Features/auth/bloc/login_bloc.dart';
 import 'package:project_2/Features/auth/bloc/profile_bloc.dart';
 import 'package:project_2/Features/auth/bloc/profile_event.dart';
 import 'package:project_2/Features/auth/domain/repositories/profile_repository.dart';
+import 'package:project_2/Features/auth/bloc/warehouse_bloc.dart';
+import 'package:project_2/Features/auth/presentation/app_information_screen.dart';
+import 'package:project_2/Features/auth/presentation/privacy_and_terms_screen.dart';
+import 'package:project_2/Features/auth/presentation/representative_pharmacies_screen.dart';
+import 'package:project_2/Features/auth/presentation/warehouse_screen.dart';
 import 'package:project_2/Features/auth/presentation/LogIn.dart';
 import 'package:project_2/Features/auth/presentation/Profile.dart';
 import 'package:project_2/InventoryScreen.dart';
 import 'package:project_2/OffersScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() =>
+      _HomeScreenState();
+}
+
+class _HomeScreenState
+    extends State<HomeScreen> {
+  Uint8List? _drawerImageBytes;
+  String? _drawerImageUrl;
+
+  String? _drawerFullName;
+  String? _drawerRole;
+  String? _drawerPhone;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadDrawerProfile();
+  }
+
+  Future<void> _loadDrawerProfile() async {
+    try {
+      final profile =
+          await sl<ProfileRepository>()
+              .getProfile();
+
+      if (!mounted) return;
+
+      setState(() {
+        _drawerImageBytes =
+            profile.imageBytes;
+
+        _drawerImageUrl =
+            profile.imageUrl;
+
+        _drawerFullName =
+            profile.fullName;
+
+        _drawerRole =
+            profile.role;
+
+        _drawerPhone =
+            profile.phone;
+      });
+    } catch (_) {
+      // نترك البيانات الافتراضية
+      // إذا تعذر جلب البروفايل.
+    }
+  }
+
+  void _openWarehouseCompanies(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider<WarehouseBloc>(
+          create: (_) => sl<WarehouseBloc>(),
+          child: const WarehouseScreen(
+            initialSection: WarehouseSection.companies,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,14 +98,11 @@ class HomeScreen extends StatelessWidget {
       {"name": "آسيا", "icon": Icons.inventory},
       {"name": "أفاميا", "icon": Icons.healing},
     ];
-    const String username = "ahmad123";
+    
     const String fullName = "أحمد محمد";
     const String phone = "0999999999";
     const String role = "مندوب";
-    const String accountStatus = "فعال";
-    const String address = "دمشق - المزة";
-    const String governorate = "دمشق";
-    const String birthDate = "2000-05-15";
+  
 
     // تأتي لاحقاً من صلاحيات المستخدم.
     const bool canEditUsername = false;
@@ -95,103 +165,259 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-        drawer: Drawer(
-          child: SafeArea(
-            child: Column(
-              children: [
-                const UserAccountsDrawerHeader(
-                  decoration: BoxDecoration(color: Color(0xFF12355B)),
-                  accountName: Text(
-                    fullName,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  accountEmail: Text(
-                    "$role - $phone",
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  currentAccountPicture: CircleAvatar(
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                   
-                   
-                      Icons.person,
-                      size: 40,
-                      color: Color(0xFF12355B),
-                    ),
-                  ),
-                ),
+       drawer: Drawer(
+  backgroundColor:  Colors.white.withOpacity(0.94),
+  child: SafeArea(
+    child: Column(
+      children: [
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              14,
+              14,
+              14,
+              10,
+            ),
+            children: [
+              // =============================================
+              // Header
+              // =============================================
+             _DrawerProfileHeader(
+  fullName:
+      _drawerFullName ?? fullName,
+  role:
+      _drawerRole ?? role,
+  phone:
+      _drawerPhone ?? phone,
+  imageBytes:
+      _drawerImageBytes,
+  imageUrl:
+      _drawerImageUrl,
+),
 
-                ListTile(
-                  leading: const Icon(Icons.person_outline),
-                  title: const Text("الملف الشخصي"),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () {
-                    Navigator.pop(context);
+              const SizedBox(height: 22),
 
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => BlocProvider(
-                          create: (_) => ProfileBloc(
-                            profileRepository: ProfileRepository(),
-                          )..add(ProfileRequested()),
-                          child: const ProfilePage(),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+              // =============================================
+              // Account
+              // =============================================
+              const _DrawerSectionTitle(
+                title: 'الحساب',
+              ),
 
-                const Divider(),
+              const SizedBox(height: 8),
 
-                ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.red),
-                  title: const Text(
-                    "تسجيل الخروج",
-                    style: TextStyle(color: Colors.red),
-                  ),
-                 onTap: () async {
+              _DrawerGroup(
+                children: [
+                  _DrawerItem(
+                    icon:
+                        Icons.manage_accounts_outlined,
+                    title: 'إدارة الحساب',
+                    subtitle:
+                        'بياناتك وإعدادات الحساب',
+                    onTap: () async {
   Navigator.pop(context);
 
-  final prefs =
-      await SharedPreferences.getInstance();
-
-  // حذف بيانات جلسة المندوب
-  await prefs.remove('token');
-  await prefs.remove('role');
-  await prefs.remove('name');
-  await prefs.remove('usernameOrPhone');
-
-  // حذف التوكن من Dio
-  sl<Dio>()
-      .options
-      .headers
-      .remove('Authorization');
-
-  if (!context.mounted) return;
-
-  // الرجوع للـ Login وحذف كل الصفحات السابقة
-  Navigator.of(context).pushAndRemoveUntil(
+  await Navigator.push(
+    context,
     MaterialPageRoute(
       builder: (_) =>
-          BlocProvider<LoginBloc>(
-        create: (_) => sl<LoginBloc>(),
+          BlocProvider<ProfileBloc>(
+        create: (_) =>
+            sl<ProfileBloc>()
+              ..add(
+                ProfileRequested(),
+              ),
         child:
-            const RepresentativeLoginScreen(),
+            const ProfilePage(),
       ),
     ),
-    (route) => false,
   );
+
+  if (!mounted) return;
+
+  await _loadDrawerProfile();
 },
-                ),
-              ],
-            ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // =============================================
+              // About App
+              // =============================================
+              const _DrawerSectionTitle(
+                title: 'حول التطبيق',
+              ),
+
+              const SizedBox(height: 8),
+
+              _DrawerGroup(
+                children: [
+                  _DrawerItem(
+                    icon:
+                        Icons.info_outline_rounded,
+                    title: 'معلومات التطبيق',
+                    subtitle:
+                        'الإصدار ومعلومات الدعم',
+                    onTap: () {
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const AppInformationScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const Divider(
+                    height: 1,
+                    color: AppColors.border,
+                  ),
+
+                  _DrawerItem(
+                    icon:
+                        Icons.privacy_tip_outlined,
+                    title:
+                        'الخصوصية والشروط',
+                    subtitle:
+                        'سياسة الخصوصية وشروط الاستخدام',
+                    onTap: () {
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const PrivacyAndTermsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
+
+        // =============================================
+        // Logout
+        // =============================================
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            14,
+            8,
+            14,
+            16,
+          ),
+          child: _DrawerLogoutButton(
+            onTap: () async {
+              Navigator.pop(context);
+
+              final bool? confirm =
+                  await showDialog<bool>(
+                context: context,
+                builder: (dialogContext) {
+                  return AlertDialog(
+                    icon: const Icon(
+                      Icons.logout_rounded,
+                      color: AppColors.danger,
+                      size: 42,
+                    ),
+                    title: const Text(
+                      'تسجيل الخروج',
+                      textAlign:
+                          TextAlign.center,
+                    ),
+                    content: const Text(
+                      'هل أنت متأكد من تسجيل الخروج من الحساب؟',
+                      textAlign:
+                          TextAlign.center,
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(
+                            dialogContext,
+                            false,
+                          );
+                        },
+                        child:
+                            const Text('إلغاء'),
+                      ),
+                      FilledButton(
+                        onPressed: () {
+                          Navigator.pop(
+                            dialogContext,
+                            true,
+                          );
+                        },
+                        style:
+                            FilledButton.styleFrom(
+                          backgroundColor:
+                              AppColors.danger,
+                          foregroundColor:
+                              Colors.white,
+                        ),
+                        child: const Text(
+                          'تسجيل الخروج',
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (confirm != true ||
+                  !context.mounted) {
+                return;
+              }
+
+              final prefs =
+                  await SharedPreferences
+                      .getInstance();
+
+              await prefs.remove('token');
+              await prefs.remove('role');
+              await prefs.remove('name');
+              await prefs.remove(
+                'usernameOrPhone',
+              );
+
+              sl<Dio>()
+                  .options
+                  .headers
+                  .remove(
+                    'Authorization',
+                  );
+
+              if (!context.mounted) {
+                return;
+              }
+
+              Navigator.of(context)
+                  .pushAndRemoveUntil(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      BlocProvider<LoginBloc>(
+                    create: (_) =>
+                        sl<LoginBloc>(),
+                    child:
+                        const RepresentativeLoginScreen(),
+                  ),
+                ),
+                (route) => false,
+              );
+            },
+          ),
+        ),
+      ],
+    ),
+  ),
+),
         backgroundColor: const Color(0xffF4F5F7),
 
         body: SafeArea(
@@ -309,7 +535,7 @@ class HomeScreen extends StatelessWidget {
                   height: 100,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
-                    children: const [
+                    children:  [
                       QuickAction(
                         icon: Icons.shopping_cart,
                         title: "طلب جديد",
@@ -320,11 +546,17 @@ class HomeScreen extends StatelessWidget {
                         title: "تسجيل دفعة",
                         color: Colors.green,
                       ),
-                      QuickAction(
-                        icon: Icons.local_pharmacy,
-                        title: "الصيدليات",
-                        color: Color(0xffDDEBFF),
-                      ),
+                     QuickAction(
+  icon: Icons.local_pharmacy,
+  title: "الصيدليات",
+  color: const Color(0xffDDEBFF),
+  onTap: () {
+    Navigator.push(
+      context,
+      representativePharmaciesRoute(),
+    );
+  },
+),
                       QuickAction(
                         icon: Icons.calendar_month,
                         title: "خطة العمل",
@@ -497,13 +729,33 @@ class HomeScreen extends StatelessWidget {
                       ),
 
                       const SizedBox(height: 20),
-                      const Align(
+                      Align(
                         alignment: Alignment.centerRight,
-                        child: Text(
-                          "شركات المستودع",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                        child: InkWell(
+                          onTap: () =>
+                              _openWarehouseCompanies(context),
+                          borderRadius: BorderRadius.circular(8),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 4,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  "شركات المستودع",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                SizedBox(width: 6),
+                                Icon(
+                                  Icons.chevron_left_rounded,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -518,27 +770,27 @@ class HomeScreen extends StatelessWidget {
                             CompanyCircle(
                               name: "الحكمة",
                               image: "assets/company1.png",
-                              onTap: () {},
+                              onTap: () => _openWarehouseCompanies(context),
                             ),
                             CompanyCircle(
                               name: "أوغاريت",
                               image: "assets/company2.png",
-                              onTap: () {},
+                              onTap: () => _openWarehouseCompanies(context),
                             ),
                             CompanyCircle(
                               name: "ابن حيان",
                               image: "assets/company3.png",
-                              onTap: () {},
+                              onTap: () => _openWarehouseCompanies(context),
                             ),
                             CompanyCircle(
                               name: "يونيفارما",
                               image: "assets/company4.png",
-                              onTap: () {},
+                              onTap: () => _openWarehouseCompanies(context),
                             ),
                             CompanyCircle(
                               name: "آسيا",
                               image: "assets/company5.png",
-                              onTap: () {},
+                              onTap: () => _openWarehouseCompanies(context),
                             ),
                           ],
                         ),
@@ -801,35 +1053,47 @@ class QuickAction extends StatelessWidget {
   final IconData icon;
   final String title;
   final Color color;
+  final VoidCallback? onTap;
 
   const QuickAction({
     super.key,
     required this.icon,
     required this.title,
     required this.color,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 90,
-      margin: const EdgeInsets.only(left: 10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          /*   BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),*/
-        ],
-      ),
-      child: Column(
-        children: [
-          CircleAvatar(radius: 28, backgroundColor: color, child: Icon(icon)),
-          const SizedBox(height: 8),
-          Text(title),
-        ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: 90,
+        margin: const EdgeInsets.only(left: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            /*
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 12,
+              offset: Offset(0, 6),
+            ),
+            */
+          ],
+        ),
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: color,
+              child: Icon(icon),
+            ),
+            const SizedBox(height: 8),
+            Text(title),
+          ],
+        ),
       ),
     );
   }
@@ -943,6 +1207,357 @@ class CompanyCircle extends StatelessWidget {
             const SizedBox(height: 6),
             Text(name, style: const TextStyle(fontSize: 12)),
           ],
+        ),
+      ),
+    );
+  }
+}
+// =========================================================
+// Drawer UI
+// =========================================================
+
+class _DrawerProfileHeader
+    extends StatelessWidget {
+  final String fullName;
+  final String role;
+  final String phone;
+  final Uint8List? imageBytes;
+final String? imageUrl;
+
+ const _DrawerProfileHeader({
+  required this.fullName,
+  required this.role,
+  required this.phone,
+  this.imageBytes,
+  this.imageUrl,
+});
+
+  @override
+  Widget build(BuildContext context) {
+    ImageProvider? profileImage;
+
+if (imageBytes != null &&
+    imageBytes!.isNotEmpty) {
+  profileImage =
+      MemoryImage(imageBytes!);
+} else if (
+    imageUrl != null &&
+    imageUrl!.trim().isNotEmpty) {
+  profileImage =
+      NetworkImage(imageUrl!);
+}
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [
+            Color(0xFF12355B),
+            Color(0xFF1F5C8F),
+          ],
+        ),
+        borderRadius:
+            BorderRadius.circular(22),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 76,
+            height: 76,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: const Color(
+                  0x33FFFFFF,
+                ),
+                width: 3,
+              ),
+            ),
+            child:CircleAvatar(
+  radius: 28,
+  backgroundColor: Colors.white,
+  backgroundImage:
+      profileImage,
+  child: profileImage == null
+      ? const Icon(
+          Icons.person_rounded,
+          color: AppColors.primary,
+          size: 32,
+        )
+      : null,
+),
+          ),
+
+          const SizedBox(height: 12),
+
+          Text(
+            fullName,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+
+          const SizedBox(height: 5),
+
+          Text(
+            role,
+            style: const TextStyle(
+              color: Color(0xFFD8E5F2),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const SizedBox(height: 9),
+
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(
+                0x20FFFFFF,
+              ),
+              borderRadius:
+                  BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize:
+                  MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.phone_outlined,
+                  color: Colors.white70,
+                  size: 15,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  phone,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11.5,
+                    fontWeight:
+                        FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DrawerSectionTitle
+    extends StatelessWidget {
+  final String title;
+
+  const _DrawerSectionTitle({
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 5,
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerGroup
+    extends StatelessWidget {
+  final List<Widget> children;
+
+  const _DrawerGroup({
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.border,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: children,
+      ),
+    );
+  }
+}
+
+class _DrawerItem
+    extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _DrawerItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius:
+          BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 13,
+          vertical: 12,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 43,
+              height: 43,
+              decoration: BoxDecoration(
+                color:
+                    AppColors.primarySoft,
+                borderRadius:
+                    BorderRadius.circular(13),
+              ),
+              child: Icon(
+                icon,
+                color: AppColors.primary,
+                size: 22,
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: AppColors
+                          .textPrimary,
+                      fontSize: 14,
+                      fontWeight:
+                          FontWeight.w700,
+                    ),
+                  ),
+
+                  const SizedBox(height: 3),
+
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: AppColors
+                          .textSecondary,
+                      fontSize: 10.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(width: 6),
+
+            const Icon(
+              Icons.chevron_left_rounded,
+              color:
+                  AppColors.textSecondary,
+              size: 22,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerLogoutButton
+    extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _DrawerLogoutButton({
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.dangerSoft,
+      borderRadius:
+          BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius:
+            BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 15,
+            vertical: 14,
+          ),
+          child: const Row(
+            children: [
+              Icon(
+                Icons.logout_rounded,
+                color: AppColors.danger,
+                size: 22,
+              ),
+
+              SizedBox(width: 11),
+
+              Expanded(
+                child: Text(
+                  'تسجيل الخروج',
+                  style: TextStyle(
+                    color:
+                        AppColors.danger,
+                    fontSize: 14,
+                    fontWeight:
+                        FontWeight.w800,
+                  ),
+                ),
+              ),
+
+              Icon(
+                Icons.chevron_left_rounded,
+                color: AppColors.danger,
+                size: 21,
+              ),
+            ],
+          ),
         ),
       ),
     );

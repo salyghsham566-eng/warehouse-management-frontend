@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:project_2/Core/di/injection_container.dart';
 import 'package:project_2/Core/theme/app_colors.dart';
+import 'package:project_2/Features/auth/bloc/evaluation_archive_bloc.dart';
 
 import 'package:project_2/Features/auth/bloc/evaluation_bloc.dart';
 import 'package:project_2/Features/auth/bloc/evaluation_coverage_details_bloc.dart';
@@ -16,8 +17,13 @@ import 'package:project_2/Features/auth/bloc/evaluation_state.dart';
 
 import 'package:project_2/Features/auth/bloc/evaluation_target_details_bloc.dart';
 import 'package:project_2/Features/auth/bloc/evaluation_target_details_event.dart';
+import 'package:project_2/Features/auth/bloc/evaluation_work_plans_bloc.dart';
+import 'package:project_2/Features/auth/bloc/evaluation_work_plans_event.dart';
+import 'package:project_2/Features/auth/bloc/evaluation_work_plans_state.dart';
 
 import 'package:project_2/Features/auth/data/models/evaluation_overview_model.dart';
+import 'package:project_2/Features/auth/data/models/evaluation_work_plans_state.dart';
+import 'package:project_2/Features/auth/presentation/evaluation_archive_screen.dart';
 import 'package:project_2/Features/auth/presentation/evaluation_coverage_details_screen.dart';
 import 'package:project_2/Features/auth/presentation/evaluation_one_time_pharmacies_details_screen.dart';
 import 'package:project_2/Features/auth/presentation/evaluation_repeated_pharmacies_details_screen.dart';
@@ -30,8 +36,23 @@ class EvaluationScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Directionality(
+  @override
+Widget build(BuildContext context) {
+  final now = DateTime.now();
+
+  return BlocProvider<
+      EvaluationWorkPlansBloc>(
+    create: (_) =>
+        sl<EvaluationWorkPlansBloc>()
+          ..add(
+            LoadEvaluationWorkPlansEvent(
+              regionId: 'all',
+              month: now.month,
+              year: now.year,
+            ),
+          ),
+
+    child: Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: const Color(0xFFF6F8FC),
@@ -86,7 +107,7 @@ class EvaluationScreen extends StatelessWidget {
           },
         ),
       ),
-    );
+    ));
   }
 }
 
@@ -114,17 +135,31 @@ class _EvaluationContent extends StatelessWidget {
     ];
 
     return RefreshIndicator(
-      onRefresh: () async {
-        context
-            .read<EvaluationBloc>()
-            .add(
-              LoadCurrentEvaluationEvent(
-                regionId:
-                    evaluation.regionId,
-              ),
-            );
-      },
+     onRefresh: () async {
+  context
+      .read<EvaluationBloc>()
+      .add(
+        LoadCurrentEvaluationEvent(
+          regionId:
+              evaluation.regionId,
+        ),
+      );
 
+  context
+      .read<
+        EvaluationWorkPlansBloc
+      >()
+      .add(
+        LoadEvaluationWorkPlansEvent(
+          regionId:
+              evaluation.regionId,
+          month:
+              evaluation.month,
+          year:
+              evaluation.year,
+        ),
+      );
+},
       child: ListView(
         padding:
             const EdgeInsets.fromLTRB(
@@ -399,6 +434,19 @@ class _EvaluationContent extends StatelessWidget {
                               regionId,
                         ),
                       );
+                      context
+    .read<
+      EvaluationWorkPlansBloc
+    >()
+    .add(
+      LoadEvaluationWorkPlansEvent(
+        regionId: regionId,
+        month:
+            evaluation.month,
+        year:
+            evaluation.year,
+      ),
+    );
                 },
               ),
             ),
@@ -722,9 +770,125 @@ const SizedBox(height: 12),
       ),
     );
   },
+),const SizedBox(height: 26),
+
+// ==================================================
+// UC-211 - Work Plan Evaluation
+// ==================================================
+
+Row(
+  children: [
+    const Expanded(
+      child: Text(
+        'تقييم خطط العمل',
+        style: TextStyle(
+          color:
+              AppColors.textPrimary,
+          fontSize: 18,
+          fontWeight:
+              FontWeight.w900,
+        ),
+      ),
+    ),
+
+    Container(
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 6,
+      ),
+
+      decoration: BoxDecoration(
+        color:
+            const Color(
+          0xFFFFF3E5,
+        ),
+
+        borderRadius:
+            BorderRadius.circular(
+          20,
+        ),
+      ),
+
+      child: const Text(
+        'مستقل عن النقاط',
+        style: TextStyle(
+          color:
+              Color(
+            0xFFB26A1B,
+          ),
+          fontSize: 11,
+          fontWeight:
+              FontWeight.w700,
+        ),
+      ),
+    ),
+  ],
 ),
 
+const SizedBox(height: 6),
+
+const Text(
+  'تقييم وصفي لخطط العمل ولا يدخل ضمن مجموع التقييم الشهري من 100 نقطة.',
+  style: TextStyle(
+    color:
+        AppColors.textSecondary,
+    fontSize: 12,
+    height: 1.5,
+  ),
+),
+
+const SizedBox(height: 12),
+
+_WorkPlanEvaluationsSection(
+  regionId:
+      evaluation.regionId,
+  month:
+      evaluation.month,
+  year:
+      evaluation.year,
+),
+
+const SizedBox(height: 20),
+const SizedBox(height: 22),
+
+// ==================================================
+// UC-212 - Evaluation Archive
+// ==================================================
+
+_EvaluationArchiveButton(
+  onTap: () {
+    Navigator.push(
+      context,
+
+      MaterialPageRoute(
+        builder: (_) {
+          return BlocProvider<
+              EvaluationArchiveBloc>(
+            create: (_) =>
+                sl<
+                    EvaluationArchiveBloc>(),
+
+            child:
+                EvaluationArchiveScreen(
+              initialRegionId:
+                  evaluation.regionId,
+
+              regions:
+                  evaluation.regions,
+            ),
+          );
+        },
+      ),
+    );
+  },
+),
+
+const SizedBox(height: 18),
+const _AutomaticCalculationInfo(),
+
           const SizedBox(height: 18),
+
 
           const _AutomaticCalculationInfo(),
         ],
@@ -1046,6 +1210,948 @@ class _EvaluationScoreCard
       ),
     );
   }
+}
+// =========================================================
+// UC-212 - Archive Button
+// =========================================================
+
+class _EvaluationArchiveButton
+    extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _EvaluationArchiveButton({
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color:
+          Colors.transparent,
+
+      child:
+          InkWell(
+        onTap:
+            onTap,
+
+        borderRadius:
+            BorderRadius.circular(
+          18,
+        ),
+
+        child:
+            Container(
+          width:
+              double.infinity,
+
+          padding:
+              const EdgeInsets.all(
+            16,
+          ),
+
+          decoration:
+              BoxDecoration(
+            color:
+                Colors.white,
+
+            borderRadius:
+                BorderRadius.circular(
+              18,
+            ),
+
+            border:
+                Border.all(
+              color:
+                  const Color(
+                0xFFDCE5EF,
+              ),
+            ),
+
+            boxShadow: [
+              BoxShadow(
+                color:
+                    Colors.black
+                        .withOpacity(
+                  0.025,
+                ),
+
+                blurRadius:
+                    10,
+
+                offset:
+                    const Offset(
+                  0,
+                  4,
+                ),
+              ),
+            ],
+          ),
+
+          child:
+              Row(
+            children: [
+              Container(
+                width:
+                    46,
+
+                height:
+                    46,
+
+                decoration:
+                    BoxDecoration(
+                  color:
+                      const Color(
+                    0xFFEAF3FF,
+                  ),
+
+                  borderRadius:
+                      BorderRadius.circular(
+                    14,
+                  ),
+                ),
+
+                child:
+                    const Icon(
+                  Icons
+                      .history_rounded,
+
+                  color:
+                      Color(
+                    0xFF2F80ED,
+                  ),
+
+                  size:
+                      24,
+                ),
+              ),
+
+              const SizedBox(
+                width:
+                    12,
+              ),
+
+              const Expanded(
+                child:
+                    Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
+
+                  children: [
+                    Text(
+                      'أرشيف التقييمات السابقة',
+
+                      style:
+                          TextStyle(
+                        color:
+                            AppColors
+                                .textPrimary,
+
+                        fontSize:
+                            14,
+
+                        fontWeight:
+                            FontWeight
+                                .w800,
+                      ),
+                    ),
+
+                    SizedBox(
+                      height:
+                          4,
+                    ),
+
+                    Text(
+                      'عرض تقييمات الأشهر السابقة حسب الشهر والمنطقة',
+
+                      style:
+                          TextStyle(
+                        color:
+                            AppColors
+                                .textSecondary,
+
+                        fontSize:
+                            11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Icon(
+                Icons
+                    .arrow_back_ios_new_rounded,
+
+                size:
+                    15,
+
+                color:
+                    AppColors
+                        .primary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+// =========================================================
+// UC-211 - Work Plan Evaluations
+// =========================================================
+
+class _WorkPlanEvaluationsSection
+    extends StatelessWidget {
+  final String regionId;
+  final int month;
+  final int year;
+
+  const _WorkPlanEvaluationsSection({
+    required this.regionId,
+    required this.month,
+    required this.year,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<
+        EvaluationWorkPlansBloc,
+        EvaluationWorkPlansState>(
+      builder: (context, state) {
+        if (state
+                is EvaluationWorkPlansLoading ||
+            state
+                is EvaluationWorkPlansInitial) {
+          return const _WorkPlansLoadingCard();
+        }
+
+        if (state
+            is EvaluationWorkPlansFailure) {
+          return _WorkPlansErrorCard(
+            message: state.message,
+
+            onRetry: () {
+              context
+                  .read<
+                    EvaluationWorkPlansBloc
+                  >()
+                  .add(
+                    LoadEvaluationWorkPlansEvent(
+                      regionId:
+                          regionId,
+                      month:
+                          month,
+                      year:
+                          year,
+                    ),
+                  );
+            },
+          );
+        }
+
+        if (state
+            is EvaluationWorkPlansSuccess) {
+          if (state.plans.isEmpty) {
+            return const _NoWorkPlanEvaluationsCard();
+          }
+
+          return Column(
+            children: [
+              for (
+                int index = 0;
+                index <
+                    state.plans.length;
+                index++
+              ) ...[
+                _WorkPlanEvaluationCard(
+                  plan:
+                      state.plans[index],
+                ),
+
+                if (index !=
+                    state.plans.length -
+                        1)
+                  const SizedBox(
+                    height: 12,
+                  ),
+              ],
+            ],
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
+  }
+}
+
+// =========================================================
+// Work Plan Card
+// =========================================================
+
+class _WorkPlanEvaluationCard
+    extends StatelessWidget {
+  final EvaluationWorkPlanModel plan;
+
+  const _WorkPlanEvaluationCard({
+    required this.plan,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final double progress =
+        (plan.completionPercentage /
+                100)
+            .clamp(
+              0.0,
+              1.0,
+            )
+            .toDouble();
+
+    final Color ratingColor =
+        _workPlanRatingColor(
+      plan.rating,
+    );
+
+    final Color ratingSoftColor =
+        _workPlanRatingSoftColor(
+      plan.rating,
+    );
+
+    return Container(
+      width: double.infinity,
+
+      padding:
+          const EdgeInsets.all(
+        16,
+      ),
+
+      decoration: BoxDecoration(
+        color: Colors.white,
+
+        borderRadius:
+            BorderRadius.circular(
+          18,
+        ),
+
+        border: Border.all(
+          color:
+              const Color(
+            0xFFE1E7EF,
+          ),
+        ),
+
+        boxShadow: [
+          BoxShadow(
+            color:
+                Colors.black
+                    .withOpacity(
+              0.025,
+            ),
+
+            blurRadius: 12,
+
+            offset:
+                const Offset(
+              0,
+              4,
+            ),
+          ),
+        ],
+      ),
+
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+
+        children: [
+          Row(
+            crossAxisAlignment:
+                CrossAxisAlignment
+                    .start,
+
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+
+                decoration:
+                    BoxDecoration(
+                  color:
+                      const Color(
+                    0xFFF2ECFF,
+                  ),
+
+                  borderRadius:
+                      BorderRadius
+                          .circular(
+                    14,
+                  ),
+                ),
+
+                child:
+                    const Icon(
+                  Icons
+                      .assignment_turned_in_outlined,
+
+                  color:
+                      Color(
+                    0xFF7A5AF8,
+                  ),
+
+                  size: 23,
+                ),
+              ),
+
+              const SizedBox(
+                width: 12,
+              ),
+
+              Expanded(
+                child: Text(
+                  plan.planName,
+
+                  style:
+                      const TextStyle(
+                    color:
+                        AppColors
+                            .textPrimary,
+
+                    fontSize:
+                        15,
+
+                    fontWeight:
+                        FontWeight
+                            .w800,
+
+                    height:
+                        1.4,
+                  ),
+                ),
+              ),
+
+              const SizedBox(
+                width: 8,
+              ),
+
+              Container(
+                padding:
+                    const EdgeInsets
+                        .symmetric(
+                  horizontal:
+                      10,
+                  vertical:
+                      6,
+                ),
+
+                decoration:
+                    BoxDecoration(
+                  color:
+                      ratingSoftColor,
+
+                  borderRadius:
+                      BorderRadius
+                          .circular(
+                    20,
+                  ),
+                ),
+
+                child: Text(
+                  plan.rating,
+
+                  style:
+                      TextStyle(
+                    color:
+                        ratingColor,
+
+                    fontSize:
+                        11,
+
+                    fontWeight:
+                        FontWeight
+                            .w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(
+            height: 15,
+          ),
+
+          // ===============================================
+          // Period
+          // ===============================================
+
+          Row(
+            children: [
+              const Icon(
+                Icons
+                    .date_range_outlined,
+
+                size:
+                    18,
+
+                color:
+                    AppColors
+                        .textSecondary,
+              ),
+
+              const SizedBox(
+                width: 7,
+              ),
+
+              Expanded(
+                child: Text(
+                  'الفترة: ${_formatWorkPlanDate(plan.startDate)} - ${_formatWorkPlanDate(plan.endDate)}',
+
+                  style:
+                      const TextStyle(
+                    color:
+                        AppColors
+                            .textSecondary,
+
+                    fontSize:
+                        12,
+
+                    fontWeight:
+                        FontWeight
+                            .w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(
+            height: 14,
+          ),
+
+          // ===============================================
+          // Completion
+          // ===============================================
+
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'نسبة الإنجاز',
+
+                  style:
+                      TextStyle(
+                    color:
+                        AppColors
+                            .textPrimary,
+
+                    fontSize:
+                        13,
+
+                    fontWeight:
+                        FontWeight
+                            .w700,
+                  ),
+                ),
+              ),
+
+              Text(
+                '${plan.completionPercentage.toStringAsFixed(0)}%',
+
+                style:
+                    const TextStyle(
+                  color:
+                      Color(
+                    0xFF7A5AF8,
+                  ),
+
+                  fontSize:
+                      14,
+
+                  fontWeight:
+                      FontWeight
+                          .w900,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(
+            height: 8,
+          ),
+
+          ClipRRect(
+            borderRadius:
+                BorderRadius.circular(
+              20,
+            ),
+
+            child:
+                LinearProgressIndicator(
+              value:
+                  progress,
+
+              minHeight:
+                  8,
+
+              backgroundColor:
+                  const Color(
+                0xFFF2ECFF,
+              ),
+
+              valueColor:
+                  const AlwaysStoppedAnimation<
+                      Color>(
+                Color(
+                  0xFF7A5AF8,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =========================================================
+// Loading
+// =========================================================
+
+class _WorkPlansLoadingCard
+    extends StatelessWidget {
+  const _WorkPlansLoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width:
+          double.infinity,
+
+      padding:
+          const EdgeInsets.all(
+        20,
+      ),
+
+      decoration:
+          BoxDecoration(
+        color:
+            Colors.white,
+
+        borderRadius:
+            BorderRadius.circular(
+          18,
+        ),
+
+        border:
+            Border.all(
+          color:
+              const Color(
+            0xFFE1E7EF,
+          ),
+        ),
+      ),
+
+      child:
+          const Center(
+        child:
+            SizedBox(
+          width:
+              24,
+
+          height:
+              24,
+
+          child:
+              CircularProgressIndicator(
+            strokeWidth:
+                2.5,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =========================================================
+// Empty
+// =========================================================
+
+class _NoWorkPlanEvaluationsCard
+    extends StatelessWidget {
+  const _NoWorkPlanEvaluationsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width:
+          double.infinity,
+
+      padding:
+          const EdgeInsets.all(
+        18,
+      ),
+
+      decoration:
+          BoxDecoration(
+        color:
+            Colors.white,
+
+        borderRadius:
+            BorderRadius.circular(
+          18,
+        ),
+
+        border:
+            Border.all(
+          color:
+              const Color(
+            0xFFE1E7EF,
+          ),
+        ),
+      ),
+
+      child:
+          const Row(
+        children: [
+          Icon(
+            Icons
+                .info_outline_rounded,
+
+            color:
+                AppColors
+                    .textSecondary,
+          ),
+
+          SizedBox(
+            width:
+                10,
+          ),
+
+          Expanded(
+            child:
+                Text(
+              'لا يوجد تقييم لخطط العمل ضمن هذا الشهر والمنطقة.',
+
+              style:
+                  TextStyle(
+                color:
+                    AppColors
+                        .textSecondary,
+
+                fontSize:
+                    12,
+
+                height:
+                    1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =========================================================
+// Error
+// =========================================================
+
+class _WorkPlansErrorCard
+    extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _WorkPlansErrorCard({
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width:
+          double.infinity,
+
+      padding:
+          const EdgeInsets.all(
+        16,
+      ),
+
+      decoration:
+          BoxDecoration(
+        color:
+            const Color(
+          0xFFFFF6F6,
+        ),
+
+        borderRadius:
+            BorderRadius.circular(
+          18,
+        ),
+
+        border:
+            Border.all(
+          color:
+              const Color(
+            0xFFFFD9D9,
+          ),
+        ),
+      ),
+
+      child:
+          Column(
+        children: [
+          Text(
+            message,
+
+            textAlign:
+                TextAlign.center,
+
+            style:
+                const TextStyle(
+              color:
+                  AppColors.danger,
+
+              fontSize:
+                  12,
+            ),
+          ),
+
+          const SizedBox(
+            height:
+                10,
+          ),
+
+          TextButton.icon(
+            onPressed:
+                onRetry,
+
+            icon:
+                const Icon(
+              Icons
+                  .refresh_rounded,
+
+              size:
+                  18,
+            ),
+
+            label:
+                const Text(
+              'إعادة المحاولة',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =========================================================
+// Rating Colors
+// =========================================================
+
+Color _workPlanRatingColor(
+  String rating,
+) {
+  switch (rating.trim()) {
+    case 'ممتاز':
+      return const Color(
+        0xFF14804A,
+      );
+
+    case 'جيد جداً':
+    case 'جيد جدا':
+      return const Color(
+        0xFF2F80ED,
+      );
+
+    case 'جيد':
+      return const Color(
+        0xFFB26A1B,
+      );
+
+    case 'سيء':
+      return const Color(
+        0xFFD92D20,
+      );
+
+    default:
+      return AppColors
+          .textSecondary;
+  }
+}
+
+Color _workPlanRatingSoftColor(
+  String rating,
+) {
+  switch (rating.trim()) {
+    case 'ممتاز':
+      return const Color(
+        0xFFEAF8F0,
+      );
+
+    case 'جيد جداً':
+    case 'جيد جدا':
+      return const Color(
+        0xFFEAF3FF,
+      );
+
+    case 'جيد':
+      return const Color(
+        0xFFFFF3E5,
+      );
+
+    case 'سيء':
+      return const Color(
+        0xFFFFEEEE,
+      );
+
+    default:
+      return const Color(
+        0xFFF0F2F5,
+      );
+  }
+}
+
+// =========================================================
+// Date Formatter
+// =========================================================
+
+String _formatWorkPlanDate(
+  String value,
+) {
+  if (value
+      .trim()
+      .isEmpty) {
+    return '-';
+  }
+
+  final DateTime? date =
+      DateTime.tryParse(
+    value,
+  );
+
+  if (date == null) {
+    return value;
+  }
+
+  final String day =
+      date.day
+          .toString()
+          .padLeft(
+            2,
+            '0',
+          );
+
+  final String month =
+      date.month
+          .toString()
+          .padLeft(
+            2,
+            '0',
+          );
+
+  return '$day/$month/${date.year}';
 }
 
 // ==========================================================
