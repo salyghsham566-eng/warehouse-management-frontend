@@ -8,6 +8,12 @@ static const String login =
   static const String companies = '/companies';
   static const String pharmacies = '/pharmacies';
   static const String orders = '/orders';
+  static String cancelOrder(
+  String orderNumber,
+) {
+  return '/orders/'
+      '${Uri.encodeComponent(orderNumber)}/cancel';
+}
   static const String collectionPharmacies =
       '/collection/pharmacies';
       static String collectionPharmacyDetails(

@@ -16,4 +16,11 @@ class OrderDetailsRefreshed extends OrderDetailsEvent {
   const OrderDetailsRefreshed({
     required this.orderNumber,
   });
+}class OrderCancellationRequested
+    extends OrderDetailsEvent {
+  final String orderNumber;
+
+  const OrderCancellationRequested({
+    required this.orderNumber,
+  });
 }

@@ -1,10 +1,12 @@
 import 'dart:typed_data';
 
 class ProfileRegionModel {
+  final int? id;
   final String name;
   final int? pharmaciesCount;
 
   const ProfileRegionModel({
+    this.id,
     required this.name,
     this.pharmaciesCount,
   });
@@ -12,12 +14,10 @@ class ProfileRegionModel {
   factory ProfileRegionModel.fromJson(
     Map<String, dynamic> json,
   ) {
-    int? readCount() {
-      final dynamic value =
-          json['pharmacies_count'] ??
-          json['pharmaciesCount'] ??
-          json['pharmacy_count'] ??
-          json['pharmacyCount'];
+    int? readNullableInt(dynamic value) {
+      if (value == null) {
+        return null;
+      }
 
       if (value is int) {
         return value;
@@ -27,45 +27,43 @@ class ProfileRegionModel {
         return value.toInt();
       }
 
-      return int.tryParse(
-        value?.toString() ?? '',
-      );
+      return int.tryParse(value.toString());
     }
 
+    final dynamic countValue =
+        json['pharmacies_count'] ??
+        json['pharmaciesCount'] ??
+        json['pharmacy_count'] ??
+        json['pharmacyCount'];
+
     return ProfileRegionModel(
+      id: readNullableInt(
+        json['id'] ??
+        json['region_id'] ??
+        json['regionId'],
+      ),
       name: (
         json['name'] ??
         json['region_name'] ??
         json['regionName'] ??
         ''
       ).toString(),
-      pharmaciesCount: readCount(),
+      pharmaciesCount: readNullableInt(countValue),
     );
   }
 }
 
 class ProfileModel {
   final String fullName;
-
   final String representativeCode;
-
   final String phone;
-
   final String email;
-
   final String role;
-
   final String accountStatus;
-
   final String address;
-
-  final List<ProfileRegionModel>
-      linkedRegions;
-
+  final List<ProfileRegionModel> linkedRegions;
   final List<String> permissions;
-
   final String? imageUrl;
-
   final Uint8List? imageBytes;
 
   const ProfileModel({
@@ -93,10 +91,7 @@ class ProfileModel {
         final dynamic value = json[key];
 
         if (value != null &&
-            value
-                .toString()
-                .trim()
-                .isNotEmpty) {
+            value.toString().trim().isNotEmpty) {
           return value.toString().trim();
         }
       }
@@ -104,8 +99,7 @@ class ProfileModel {
       return fallback;
     }
 
-    List<ProfileRegionModel>
-        readRegions() {
+    List<ProfileRegionModel> readRegions() {
       final dynamic raw =
           json['linked_regions'] ??
           json['linkedRegions'] ??
@@ -118,18 +112,12 @@ class ProfileModel {
       return raw
           .whereType<Map>()
           .map(
-            (item) =>
-                ProfileRegionModel.fromJson(
-              Map<String, dynamic>.from(
-                item,
-              ),
+            (item) => ProfileRegionModel.fromJson(
+              Map<String, dynamic>.from(item),
             ),
           )
           .where(
-            (region) =>
-                region.name
-                    .trim()
-                    .isNotEmpty,
+            (region) => region.name.trim().isNotEmpty,
           )
           .toList();
     }
@@ -153,24 +141,17 @@ class ProfileModel {
                   item['label'] ??
                   item['title'] ??
                   ''
-                )
-                    .toString()
-                    .trim();
+                ).toString().trim();
               }
 
-              return item
-                  .toString()
-                  .trim();
+              return item.toString().trim();
             },
           )
-          .where(
-            (item) => item.isNotEmpty,
-          )
+          .where((item) => item.isNotEmpty)
           .toList();
     }
 
-    final String image =
-        readString(
+    final String image = readString(
       const [
         'image_url',
         'imageUrl',
@@ -186,16 +167,13 @@ class ProfileModel {
           'name',
         ],
       ),
-
-      representativeCode:
-          readString(
+      representativeCode: readString(
         const [
           'representative_code',
           'representativeCode',
           'code',
         ],
       ),
-
       phone: readString(
         const [
           'phone',
@@ -203,19 +181,12 @@ class ProfileModel {
           'phoneNumber',
         ],
       ),
-
       email: readString(
-        const [
-          'email',
-        ],
+        const ['email'],
       ),
-
       role: readString(
-        const [
-          'role',
-        ],
+        const ['role'],
       ),
-
       accountStatus: readString(
         const [
           'account_status',
@@ -223,7 +194,6 @@ class ProfileModel {
           'status',
         ],
       ),
-
       address: readString(
         const [
           'address',
@@ -231,17 +201,9 @@ class ProfileModel {
           'fullAddress',
         ],
       ),
-
-      linkedRegions:
-          readRegions(),
-
-      permissions:
-          readPermissions(),
-
-      imageUrl:
-          image.isEmpty
-              ? null
-              : image,
+      linkedRegions: readRegions(),
+      permissions: readPermissions(),
+      imageUrl: image.isEmpty ? null : image,
     );
   }
 
@@ -253,34 +215,16 @@ class ProfileModel {
   }) {
     return ProfileModel(
       fullName: fullName,
-
-      representativeCode:
-          representativeCode,
-
-      phone:
-          phone ?? this.phone,
-
-      email:
-          email ?? this.email,
-
+      representativeCode: representativeCode,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
       role: role,
-
-      accountStatus:
-          accountStatus,
-
+      accountStatus: accountStatus,
       address: address,
-
-      linkedRegions:
-          linkedRegions,
-
-      permissions:
-          permissions,
-
-      imageUrl:
-          imageUrl ?? this.imageUrl,
-
-      imageBytes:
-          imageBytes ?? this.imageBytes,
+      linkedRegions: linkedRegions,
+      permissions: permissions,
+      imageUrl: imageUrl ?? this.imageUrl,
+      imageBytes: imageBytes ?? this.imageBytes,
     );
   }
 }

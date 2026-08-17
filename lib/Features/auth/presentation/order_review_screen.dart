@@ -9,7 +9,7 @@ import 'package:project_2/Features/auth/data/models/order_request_model.dart';
 import 'package:project_2/Features/auth/domain/repositories/order_repository.dart';
 import 'package:project_2/Features/auth/presentation/order_success_screen.dart';
 import 'package:project_2/orders_store.dart';
-
+import 'package:project_2/Core/widgets/app_image.dart';
 class OrderReviewScreen extends StatefulWidget {
   final Map<String, dynamic> pharmacy;
   final List<Map<String, dynamic>> cartItems;
@@ -348,48 +348,37 @@ final List<OrderItemModel>
     orderItems =
     reviewItems.map(
   (item) {
-    return OrderItemModel(
-      productId:
-          _toInt(
-        item['id'] ??
-            item['product_id'] ??
-            item['productId'] ??
-            item['medicineId'],
-      ),
+   return OrderItemModel(
+  productId: _toInt(
+    item['id'] ??
+        item['product_id'] ??
+        item['productId'] ??
+        item['medicineId'],
+  ),
 
-      quantity:
-          _getQuantity(
-        item,
-      ),
+  quantity: _getQuantity(item),
 
-      price:
-          _getPrice(
-        item,
-      ),
+  freeQuantity:
+      _getFreeQuantity(item),
 
-      discountPercent:
-          _getDiscountPercent(
-        item,
-      ),
+  price: _getPrice(item),
 
-      offerSource:
-          _getOfferSource(
-        item,
-      ),
+  discountPercent:
+      _getDiscountPercent(item),
 
-      offerId:
-          item['offerId']
-                  ?.toString() ??
-              item['offer_id']
-                  ?.toString(),
+  offerSource:
+      _getOfferSource(item),
 
-      promotionBasketId:
-          item['promotionBasketId']
-                  ?.toString() ??
-              item[
-                      'promotion_basket_id']
-                  ?.toString(),
-    );
+  offerId:
+      item['offerId']?.toString() ??
+      item['offer_id']?.toString(),
+
+  promotionBasketId:
+      item['promotionBasketId']
+              ?.toString() ??
+          item['promotion_basket_id']
+              ?.toString(),
+);
   },
 ).toList();
 final orderRequest = OrderRequestModel(
@@ -658,23 +647,15 @@ void dispose() {
                   color: const Color(0xffF1F6F7),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: imagePath.isEmpty
-                    ? const Icon(
-                        Icons.medication_outlined,
-                        color: Color(0xff4F8B8A),
-                        size: 36,
-                      )
-                    : Image.asset(
-                        imagePath,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.medication_outlined,
-                            color: Color(0xff4F8B8A),
-                            size: 36,
-                          );
-                        },
-                      ),
+               child: AppImage(
+  image: imagePath,
+  fit: BoxFit.contain,
+  fallbackIcon:
+      Icons.medication_outlined,
+  fallbackColor:
+      const Color(0xff4F8B8A),
+  fallbackSize: 36,
+),
               ),
               const SizedBox(width: 10),
               Expanded(

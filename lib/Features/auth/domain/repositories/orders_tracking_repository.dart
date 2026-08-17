@@ -7,5 +7,7 @@ abstract class OrdersTrackingRepository {
 
   Future<OrderDetailsModel> getOrderDetails(
     String orderNumber,
-  );
+  );Future<void> cancelOrder(
+  String orderNumber,
+);
 }

@@ -9,7 +9,79 @@ class OrderDetailsScreen extends StatelessWidget {
   final String orderNumber;
 
   const OrderDetailsScreen({super.key, required this.orderNumber});
+Future<void> _showCancelOrderDialog(
+  BuildContext context,
+) async {
+  final bool? confirmed =
+      await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Color(0xffD83A3A),
+              ),
+              SizedBox(width: 8),
+              Text(
+                'إلغاء الطلبية',
+              ),
+            ],
+          ),
+          content: const Text(
+            'هل أنت متأكد من إلغاء هذه الطلبية؟ '
+            'لن تتمكن من تعديلها بعد الإلغاء.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  false,
+                );
+              },
+              child: const Text(
+                'تراجع',
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  true,
+                );
+              },
+              style:
+                  ElevatedButton.styleFrom(
+                backgroundColor:
+                    const Color(0xffD83A3A),
+                foregroundColor:
+                    Colors.white,
+              ),
+              child: const Text(
+                'تأكيد الإلغاء',
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
 
+  if (confirmed != true ||
+      !context.mounted) {
+    return;
+  }
+
+  context.read<OrderDetailsBloc>().add(
+        OrderCancellationRequested(
+          orderNumber: orderNumber,
+        ),
+      );
+}
   Map<String, dynamic>? _findOrder(List<Map<String, dynamic>> orders) {
     for (final order in orders) {
       final number = _orderNumber(order);
@@ -314,7 +386,10 @@ Widget build(BuildContext context) {
                       ),
                     );
               },
-              child: _buildDetails(order),
+              child: _buildDetails(
+  context,
+  order,
+),
             ),
           ),
         );
@@ -422,7 +497,10 @@ Widget _buildErrorState(
     );
   }
 
-  Widget _buildDetails(Map<String, dynamic> order) {
+  Widget _buildDetails(
+  BuildContext context,
+  Map<String, dynamic> order,
+) {
     final status = _status(order);
     final items = _items(order);
     final delegateNote = _delegateNote(order);
@@ -487,6 +565,37 @@ Widget _buildErrorState(
         const SizedBox(height: 8),
 
         _buildTotalsCard(order),
+        if (status == 'pending_review') ...[
+  const SizedBox(height: 18),
+
+  SizedBox(
+    width: double.infinity,
+    child: OutlinedButton.icon(
+      onPressed: () {
+        _showCancelOrderDialog(
+          context,
+        );
+      },
+      icon: const Icon(
+        Icons.cancel_outlined,
+      ),
+      label: const Text(
+        'إلغاء الطلبية',
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor:
+            const Color(0xffD83A3A),
+        side: const BorderSide(
+          color: Color(0xffD83A3A),
+        ),
+        padding:
+            const EdgeInsets.symmetric(
+          vertical: 13,
+        ),
+      ),
+    ),
+  ),
+],
       ],
     );
   }

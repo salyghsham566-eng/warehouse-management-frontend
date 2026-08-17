@@ -90,5 +90,76 @@ Future<OrderDetailsModel> getOrderDetails(
   return OrderDetailsModel.fromJson(
     Map<String, dynamic>.from(data),
   );
+}@override
+Future<void> cancelOrder(
+  String orderNumber,
+) async {
+  try {
+    await dio.patch(
+      ApiEndpoints.cancelOrder(
+        orderNumber,
+      ),
+    );
+  } on DioException catch (error) {
+    final dynamic data =
+        error.response?.data;
+
+    if (data is Map) {
+      final dynamic message =
+          data['message'] ??
+          data['error'];
+
+      if (message != null &&
+          message
+              .toString()
+              .trim()
+              .isNotEmpty) {
+        throw Exception(
+          message.toString().trim(),
+        );
+      }
+    }
+
+    switch (error.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        throw Exception(
+          'انتهت مهلة الاتصال بالخادم',
+        );
+
+      case DioExceptionType.connectionError:
+        throw Exception(
+          'تعذر الاتصال بالخادم',
+        );
+
+      case DioExceptionType.badResponse:
+        if (error.response?.statusCode == 404) {
+          throw Exception(
+            'لم يتم العثور على الطلبية',
+          );
+        }
+
+        if (error.response?.statusCode == 409) {
+          throw Exception(
+            'لا يمكن إلغاء هذه الطلبية بحالتها الحالية',
+          );
+        }
+
+        throw Exception(
+          'تعذر إلغاء الطلبية',
+        );
+
+      case DioExceptionType.cancel:
+        throw Exception(
+          'تم إلغاء طلب الاتصال',
+        );
+
+      default:
+        throw Exception(
+          'حدث خطأ أثناء إلغاء الطلبية',
+        );
+    }
+  }
 }
 }

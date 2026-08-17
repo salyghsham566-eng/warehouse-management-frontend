@@ -5,7 +5,8 @@ import 'package:project_2/Features/auth/data/models/profile_model.dart';
 
 class MockProfileDataSource
     implements ProfileDataSource {
-      String _currentPassword = 'Old@1234';
+  String _currentPassword = 'Old@1234';
+
   ProfileModel _profile =
       const ProfileModel(
     fullName: 'أحمد محمد',
@@ -17,14 +18,17 @@ class MockProfileDataSource
     address: 'دمشق - المزة',
     linkedRegions: [
       ProfileRegionModel(
+        id: 1,
         name: 'دمشق',
         pharmaciesCount: 24,
       ),
       ProfileRegionModel(
+        id: 2,
         name: 'ريف دمشق',
         pharmaciesCount: 18,
       ),
       ProfileRegionModel(
+        id: 3,
         name: 'حمص',
       ),
     ],
@@ -67,30 +71,28 @@ class MockProfileDataSource
 
     return _profile;
   }
+
   @override
-Future<void> changePassword({
-  required String currentPassword,
-  required String newPassword,
-}) async {
-  await Future<void>.delayed(
-    const Duration(milliseconds: 500),
-  );
-
-  if (currentPassword !=
-      _currentPassword) {
-    throw Exception(
-      'كلمة المرور الحالية غير صحيحة',
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await Future<void>.delayed(
+      const Duration(milliseconds: 500),
     );
-  }
 
-  if (newPassword ==
-      _currentPassword) {
-    throw Exception(
-      'كلمة المرور الجديدة يجب أن تختلف عن الحالية',
-    );
-  }
+    if (currentPassword != _currentPassword) {
+      throw Exception(
+        'كلمة المرور الحالية غير صحيحة',
+      );
+    }
 
-  _currentPassword =
-      newPassword;
-}
+    if (newPassword == _currentPassword) {
+      throw Exception(
+        'كلمة المرور الجديدة يجب أن تختلف عن الحالية',
+      );
+    }
+
+    _currentPassword = newPassword;
+  }
 }

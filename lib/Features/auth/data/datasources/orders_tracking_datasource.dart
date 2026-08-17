@@ -6,5 +6,7 @@ abstract class OrdersTrackingDataSource {
   Future<List<TrackedOrderModel>> getOrders();
   Future<OrderDetailsModel> getOrderDetails(
     String orderNumber,
-  );
+  );Future<void> cancelOrder(
+  String orderNumber,
+);
 }

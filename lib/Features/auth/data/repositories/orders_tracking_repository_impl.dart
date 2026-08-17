@@ -21,5 +21,10 @@ Future<OrderDetailsModel> getOrderDetails(
   String orderNumber,
 ) {
   return dataSource.getOrderDetails(orderNumber);
+}@override
+Future<void> cancelOrder(
+  String orderNumber,
+) {
+  return dataSource.cancelOrder(orderNumber);
 }
 }

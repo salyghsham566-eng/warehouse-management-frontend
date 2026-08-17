@@ -19,17 +19,20 @@ import 'package:project_2/Features/auth/bloc/offers_event.dart';
 import 'package:project_2/Features/auth/bloc/profile_bloc.dart';
 import 'package:project_2/Features/auth/bloc/profile_event.dart';
 import 'package:project_2/Features/auth/bloc/warehouse_bloc.dart';
+import 'package:project_2/Features/auth/bloc/warehouse_event.dart';
 import 'package:project_2/Features/auth/bloc/work_plans_bloc.dart';
 import 'package:project_2/Features/auth/bloc/work_plans_event.dart';
 
 import 'package:project_2/Features/auth/data/models/notification_model.dart';
 import 'package:project_2/Features/auth/data/models/profile_model.dart';
+import 'package:project_2/Features/auth/data/models/work_plan_model.dart';
 
 import 'package:project_2/Features/auth/domain/repositories/evaluation_repository.dart';
 import 'package:project_2/Features/auth/domain/repositories/financial_dashboard_repository.dart';
 import 'package:project_2/Features/auth/domain/repositories/notifications_repository.dart';
 import 'package:project_2/Features/auth/domain/repositories/orders_tracking_repository.dart';
 import 'package:project_2/Features/auth/domain/repositories/profile_repository.dart';
+import 'package:project_2/Features/auth/domain/repositories/work_plans_repository.dart';
 
 import 'package:project_2/Features/auth/presentation/2pharmacy_search_page.dart';
 import 'package:project_2/Features/auth/presentation/ChooseCompanyScreen.dart';
@@ -66,7 +69,9 @@ class _HomeScreenState extends State<HomeScreen> {
   String _pendingReceivables = '—';
   String _todayCollections = '—';
   String _targetAchievement = '—';
+  String _evaluationScore = '—';
   String _debtorPharmacies = '—';
+  WorkPlanModel? _activeWorkPlan;
 
   List<NotificationModel> _latestNotifications = const [];
   int _unreadNotificationsCount = 0;
@@ -100,7 +105,9 @@ class _HomeScreenState extends State<HomeScreen> {
     String receivables = _pendingReceivables;
     String collections = _todayCollections;
     String target = _targetAchievement;
+    String evaluationScore = _evaluationScore;
     String debtorPharmacies = _debtorPharmacies;
+    WorkPlanModel? activeWorkPlan = _activeWorkPlan;
     List<NotificationModel> latest = _latestNotifications;
     int unreadCount = _unreadNotificationsCount;
 
@@ -154,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
           dashboard.metricById('debtor_pharmacies')?.formattedValue ?? '—';
     } catch (_) {}
 
-    // Evaluation: نسبة تحقيق التارجت الفعلية
+    // Evaluation: نسبة تحقيق التارجت + التقييم النهائي من 100
     try {
       final evaluation =
           await sl<EvaluationRepository>().getCurrentEvaluation(regionId: 'all');
@@ -167,6 +174,26 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 
       target = '${targetDetails.percentage.toStringAsFixed(0)}%';
+      evaluationScore = '${evaluation.finalScore.toStringAsFixed(0)}/100';
+    } catch (_) {}
+
+    // Work Plans: أول خطة نشطة حالياً
+    try {
+      final workPlans = await sl<WorkPlansRepository>().getWorkPlans();
+
+      final allPlans = <WorkPlanModel>[
+        ...workPlans.assignedPlans,
+        ...workPlans.createdPlans,
+      ];
+
+      activeWorkPlan = null;
+
+      for (final plan in allPlans) {
+        if (plan.status == WorkPlanStatus.inProgress) {
+          activeWorkPlan = plan;
+          break;
+        }
+      }
     } catch (_) {}
 
     // Notifications: آخر 3 + العداد
@@ -191,7 +218,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _pendingReceivables = receivables;
       _todayCollections = collections;
       _targetAchievement = target;
+      _evaluationScore = evaluationScore;
       _debtorPharmacies = debtorPharmacies;
+      _activeWorkPlan = activeWorkPlan;
       _latestNotifications = latest;
       _unreadNotificationsCount = unreadCount;
       _isLoading = false;
@@ -322,7 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => BlocProvider<WarehouseBloc>(
-          create: (_) => sl<WarehouseBloc>(),
+          create: (_) => sl<WarehouseBloc>()..add(LoadWarehouseOverviewEvent()),
           child: const WarehouseScreen(),
         ),
       ),
@@ -493,21 +522,17 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Padding(
               padding: const EdgeInsets.only(left: 10, right: 4),
-              child: InkWell(
-                onTap: _openProfile,
-                customBorder: const CircleBorder(),
-                child: CircleAvatar(
-                  radius: 18,
-                  backgroundColor: AppColors.primarySoft,
-                  backgroundImage: _profileImage,
-                  child: _profileImage == null
-                      ? const Icon(
-                          Icons.person_rounded,
-                          color: AppColors.primary,
-                          size: 21,
-                        )
-                      : null,
-                ),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.primarySoft,
+                backgroundImage: _profileImage,
+                child: _profileImage == null
+                    ? const Icon(
+                        Icons.person_rounded,
+                        color: AppColors.primary,
+                        size: 21,
+                      )
+                    : null,
               ),
             ),
           ],
@@ -659,6 +684,46 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 22),
 
+              const _SectionTitle(
+                title: 'متابعة سريعة',
+                subtitle: 'الخطة النشطة وتقييمك الحالي',
+              ),
+
+              const SizedBox(height: 10),
+
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: _HomeCompactCard(
+                      icon: Icons.assignment_outlined,
+                      color: const Color(0xFF6941C6),
+                      title: 'الخطة النشطة',
+                      value: _activeWorkPlan?.name ?? 'لا توجد خطة نشطة',
+                      subtitle: _activeWorkPlan == null
+                          ? 'عرض خطط العمل'
+                          : 'الإنجاز ${_activeWorkPlan!.progress.toStringAsFixed(0)}%',
+                      onTap: _openWorkPlans,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: _HomeCompactCard(
+                      icon: Icons.workspace_premium_outlined,
+                      color: const Color(0xFF039855),
+                      title: 'تقييمي',
+                      value: _evaluationScore,
+                      subtitle: 'التقييم الحالي',
+                      onTap: _openEvaluation,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 22),
+
               Row(
                 children: [
                   const Expanded(
@@ -710,10 +775,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     role: _displayRole,
                     phone: _profile?.phone ?? '',
                     imageProvider: _profileImage,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _openProfile();
-                    },
                   ),
                   const SizedBox(height: 20),
                   const _DrawerSectionTitle(title: 'الحساب'),
@@ -1104,6 +1165,107 @@ class HomeStatCard extends StatelessWidget {
 }
 
 // =========================================================
+// HOME COMPACT CARD
+// =========================================================
+
+class _HomeCompactCard extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String value;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _HomeCompactCard({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.value,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(13),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: color,
+                      size: 19,
+                    ),
+                  ),
+                  const Spacer(),
+                  const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                value,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: color,
+                  fontWeight: FontWeight.w900,
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =========================================================
 // QUICK ACTION
 // =========================================================
 
@@ -1333,80 +1495,74 @@ class _DrawerProfileHeader extends StatelessWidget {
   final String role;
   final String phone;
   final ImageProvider? imageProvider;
-  final VoidCallback onTap;
 
   const _DrawerProfileHeader({
     required this.fullName,
     required this.role,
     required this.phone,
     required this.imageProvider,
-    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
-        padding: const EdgeInsets.all(17),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [
-              Color(0xFF12355B),
-              Color(0xFF1F5C8F),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(22),
-        ),
-        child: Column(
-          children: [
-            CircleAvatar(
-              radius: 35,
-              backgroundColor: Colors.white,
-              backgroundImage: imageProvider,
-              child: imageProvider == null
-                  ? const Icon(
-                      Icons.person_rounded,
-                      color: AppColors.primary,
-                      size: 32,
-                    )
-                  : null,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              fullName,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              role,
-              style: const TextStyle(
-                color: Color(0xFFD8E5F2),
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            if (phone.trim().isNotEmpty) ...[
-              const SizedBox(height: 7),
-              Text(
-                phone,
-                textDirection: TextDirection.ltr,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 11,
-                ),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [
+            Color(0xFF12355B),
+            Color(0xFF1F5C8F),
           ],
         ),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 35,
+            backgroundColor: Colors.white,
+            backgroundImage: imageProvider,
+            child: imageProvider == null
+                ? const Icon(
+                    Icons.person_rounded,
+                    color: AppColors.primary,
+                    size: 32,
+                  )
+                : null,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            fullName,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            role,
+            style: const TextStyle(
+              color: Color(0xFFD8E5F2),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (phone.trim().isNotEmpty) ...[
+            const SizedBox(height: 7),
+            Text(
+              phone,
+              textDirection: TextDirection.ltr,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

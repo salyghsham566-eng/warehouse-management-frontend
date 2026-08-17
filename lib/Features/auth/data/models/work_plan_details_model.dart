@@ -18,10 +18,11 @@ class WorkPlanDetailsModel {
 
   final String region;
   final String notes;
-  final List<WorkPlanOfficialNoteModel> officialNotes;
 
+  final List<WorkPlanOfficialNoteModel> officialNotes;
   final List<WorkPlanGoalModel> goals;
-final List<WorkPlanPersonalNoteModel> personalNotes;
+  final List<WorkPlanPersonalNoteModel> personalNotes;
+
   const WorkPlanDetailsModel({
     required this.id,
     required this.name,
@@ -39,6 +40,43 @@ final List<WorkPlanPersonalNoteModel> personalNotes;
     required this.reviewReason,
   });
 
+  WorkPlanDetailsModel copyWith({
+    int? id,
+    String? name,
+    String? description,
+    String? source,
+    String? startDate,
+    String? endDate,
+    WorkPlanStatus? status,
+    double? progress,
+    String? reviewReason,
+    String? region,
+    String? notes,
+    List<WorkPlanOfficialNoteModel>? officialNotes,
+    List<WorkPlanGoalModel>? goals,
+    List<WorkPlanPersonalNoteModel>? personalNotes,
+  }) {
+    return WorkPlanDetailsModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      source: source ?? this.source,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      status: status ?? this.status,
+      progress: progress ?? this.progress,
+      region: region ?? this.region,
+      notes: notes ?? this.notes,
+      officialNotes:
+          officialNotes ?? this.officialNotes,
+      goals: goals ?? this.goals,
+      personalNotes:
+          personalNotes ?? this.personalNotes,
+      reviewReason:
+          reviewReason ?? this.reviewReason,
+    );
+  }
+
   factory WorkPlanDetailsModel.fromJson(
     Map<String, dynamic> json,
   ) {
@@ -55,43 +93,69 @@ final List<WorkPlanPersonalNoteModel> personalNotes;
       status: workPlanStatusFromString(
         json['status']?.toString(),
       ),
-      progress: _toDouble(json['progress']),
+      progress: _toDouble(
+        json['progress'],
+      ),
       region: json['region'] ?? '',
       notes: json['notes'] ?? '',
+
       goals: goalsJson
           .map(
-            (e) => WorkPlanGoalModel.fromJson(
-              Map<String, dynamic>.from(e),
+            (e) =>
+                WorkPlanGoalModel.fromJson(
+              Map<String, dynamic>.from(
+                e,
+              ),
             ),
           )
           .toList(),
-     personalNotes:
-    (json['personal_notes'] as List<dynamic>? ?? [])
-        .map(
-          (item) => WorkPlanPersonalNoteModel.fromJson(
-            Map<String, dynamic>.from(item),
-          ),
-        )
-        .toList(),
-        officialNotes:
-    (json['official_notes'] as List<dynamic>? ?? [])
-        .map(
-          (item) => WorkPlanOfficialNoteModel.fromJson(
-            Map<String, dynamic>.from(item),
-          ),
-        )
-        .toList(),
-        reviewReason:
-    json['review_reason']?.toString() ??
-    json['reason']?.toString() ??
-    json['rejection_reason']?.toString() ??
-    json['modification_reason']?.toString(),
+
+      personalNotes:
+          (json['personal_notes']
+                      as List<dynamic>? ??
+                  [])
+              .map(
+                (item) =>
+                    WorkPlanPersonalNoteModel
+                        .fromJson(
+                  Map<String, dynamic>.from(
+                    item,
+                  ),
+                ),
+              )
+              .toList(),
+
+      officialNotes:
+          (json['official_notes']
+                      as List<dynamic>? ??
+                  [])
+              .map(
+                (item) =>
+                    WorkPlanOfficialNoteModel
+                        .fromJson(
+                  Map<String, dynamic>.from(
+                    item,
+                  ),
+                ),
+              )
+              .toList(),
+
+      reviewReason:
+          json['review_reason']?.toString() ??
+              json['reason']?.toString() ??
+              json['rejection_reason']
+                  ?.toString() ??
+              json['modification_reason']
+                  ?.toString(),
     );
-    
   }
 
-  static double _toDouble(dynamic value) {
-    if (value is num) return value.toDouble();
+  static double _toDouble(
+    dynamic value,
+  ) {
+    if (value is num) {
+      return value.toDouble();
+    }
 
     return double.tryParse(
           value?.toString() ?? '',

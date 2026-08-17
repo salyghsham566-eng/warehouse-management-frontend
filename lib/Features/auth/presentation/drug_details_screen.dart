@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project_2/Core/widgets/app_image.dart';
 
 class DrugDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -334,17 +335,17 @@ class _DrugDetailsScreenState extends State<DrugDetailsScreen> {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xffE4E9F0)),
       ),
-      child: Image.asset(
-        widget.product["image"]?.toString() ?? "",
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          return const Icon(
-            Icons.medication_outlined,
-            color: Color(0xff4F8B8A),
-            size: 90,
-          );
-        },
-      ),
+     child: AppImage(
+  image:
+      widget.product["image"]
+          ?.toString(),
+  fit: BoxFit.contain,
+  fallbackIcon:
+      Icons.medication_outlined,
+  fallbackColor:
+      const Color(0xff4F8B8A),
+  fallbackSize: 90,
+),
     );
   }
 

@@ -6,9 +6,10 @@ import '../models/tracked_order_model.dart';
 import 'orders_tracking_datasource.dart';
 
 class MockOrdersTrackingDataSource implements OrdersTrackingDataSource {
+ final Map<String, String> _statusOverrides = {};
+
   List<Map<String, dynamic>> _fallbackOrders() {
     final DateTime now = DateTime.now();
-
     return [
       {
         'id': 1,
@@ -109,31 +110,40 @@ class MockOrdersTrackingDataSource implements OrdersTrackingDataSource {
   }
 
   List<Map<String, dynamic>> _allOrders() {
-    final List<Map<String, dynamic>> result = [];
-    final Set<String> usedNumbers = <String>{};
+  final List<Map<String, dynamic>> result = [];
+  final Set<String> usedNumbers = <String>{};
 
-    // الطلبات التي أنشأها المستخدم تأتي أولاً حتى تكون هي الأحدث
-    // وحتى تتغلب على أي طلب Mock يحمل نفس الرقم.
-    final List<Map<String, dynamic>> sources = [
-      ...OrdersStore.instance.ordersNotifier.value.map(
-        (order) => Map<String, dynamic>.from(order),
-      ),
-      ..._fallbackOrders(),
-    ];
+  final List<Map<String, dynamic>> sources = [
+    ...OrdersStore.instance.ordersNotifier.value.map(
+      (order) => Map<String, dynamic>.from(order),
+    ),
+    ..._fallbackOrders(),
+  ];
 
-    for (final order in sources) {
-      final String number =
-          order['orderNumber']?.toString() ??
-          order['order_number']?.toString() ??
-          '';
+  for (final source in sources) {
+    final order = Map<String, dynamic>.from(source);
 
-      if (number.isEmpty || usedNumbers.add(number)) {
-        result.add(order);
+    final String number =
+        order['orderNumber']?.toString() ??
+        order['order_number']?.toString() ??
+        '';
+
+    if (number.isNotEmpty) {
+      final overrideStatus =
+          _statusOverrides[number];
+
+      if (overrideStatus != null) {
+        order['status'] = overrideStatus;
       }
     }
 
-    return result;
+    if (number.isEmpty || usedNumbers.add(number)) {
+      result.add(order);
+    }
   }
+
+  return result;
+}
 
   @override
   Future<List<TrackedOrderModel>> getOrders() async {
@@ -172,5 +182,50 @@ class MockOrdersTrackingDataSource implements OrdersTrackingDataSource {
     }
 
     throw Exception('لم يتم العثور على الطلب');
+  }@override
+Future<void> cancelOrder(
+  String orderNumber,
+) async {
+  await Future<void>.delayed(
+    const Duration(milliseconds: 350),
+  );
+
+  Map<String, dynamic>? targetOrder;
+
+  for (final order in _allOrders()) {
+    final String number =
+        order['orderNumber']?.toString() ??
+        order['order_number']?.toString() ??
+        '';
+
+    if (number == orderNumber) {
+      targetOrder = order;
+      break;
+    }
   }
+
+  if (targetOrder == null) {
+    throw Exception(
+      'لم يتم العثور على الطلبية',
+    );
+  }
+
+  final String status =
+      targetOrder['status']?.toString() ??
+      '';
+
+  if (status != 'pending_review') {
+    throw Exception(
+      'لا يمكن إلغاء هذه الطلبية',
+    );
+  }
+
+  _statusOverrides[orderNumber] =
+      'cancelled_by_rep';
+
+  OrdersStore.instance.updateOrderStatus(
+    orderNumber: orderNumber,
+    status: 'cancelled_by_rep',
+  );
+}
 }

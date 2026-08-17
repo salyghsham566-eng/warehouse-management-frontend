@@ -195,6 +195,40 @@ class _BasketContent extends StatelessWidget {
                     basket,
               ),
 
+              if (basket.supervisorNotes.trim().isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.info_outline,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          basket.supervisorNotes,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 11.5,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(
                 height:
                     20,
@@ -224,7 +258,9 @@ class _BasketContent extends StatelessWidget {
                   ),
 
                   Text(
-                    '${basket.items.length} أصناف',
+                    basket.totalFreeQuantity > 0
+                        ? '${basket.totalPaidQuantity} مدفوعة • ${basket.totalFreeQuantity} مجانية'
+                        : '${basket.items.length} أصناف',
 
                     style:
                         const TextStyle(
@@ -553,10 +589,8 @@ class _HeaderCard
 // Product
 // =========================================================
 
-class _ProductCard
-    extends StatelessWidget {
-  final PromotionalBasketItemModel
-      item;
+class _ProductCard extends StatelessWidget {
+  final PromotionalBasketItemModel item;
 
   const _ProductCard({
     required this.item,
@@ -564,227 +598,143 @@ class _ProductCard
 
   @override
   Widget build(BuildContext context) {
+    final bool freeOnly = item.isFree;
+
     final double subtotal =
-        item.price *
-            item.quantity;
+        freeOnly ? 0 : item.price * item.quantity;
 
     final double discount =
-        subtotal *
-            (item.discountPercent /
-                100);
+        freeOnly ? 0 : subtotal * (item.discountPercent / 100);
 
-    final double total =
-        subtotal -
-            discount;
+    final double total = subtotal - discount;
+
+    final int shownQuantity =
+        freeOnly ? item.freeQuantity : item.quantity;
 
     return Container(
-      padding:
-          const EdgeInsets.all(
-        14,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
       ),
-
-      decoration:
-          BoxDecoration(
-        color:
-            Colors.white,
-
-        borderRadius:
-            BorderRadius.circular(
-          16,
-        ),
-
-        border:
-            Border.all(
-          color:
-              AppColors.border,
-        ),
-      ),
-
-      child:
-          Column(
+      child: Column(
         children: [
           Row(
             children: [
               Container(
-                width:
-                    44,
-
-                height:
-                    44,
-
-                decoration:
-                    BoxDecoration(
-                  color:
-                      AppColors
-                          .primarySoft,
-
-                  borderRadius:
-                      BorderRadius.circular(
-                    12,
-                  ),
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: freeOnly
+                      ? AppColors.successSoft
+                      : AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-
-                child:
-                    const Icon(
-                  Icons
-                      .medication_outlined,
-
-                  color:
-                      AppColors.primary,
-
-                  size:
-                      22,
+                child: Icon(
+                  freeOnly
+                      ? Icons.card_giftcard_rounded
+                      : Icons.medication_outlined,
+                  color: freeOnly
+                      ? AppColors.success
+                      : AppColors.primary,
+                  size: 22,
                 ),
               ),
-
-              const SizedBox(
-                width:
-                    11,
-              ),
-
+              const SizedBox(width: 11),
               Expanded(
-                child:
-                    Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
-
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       item.productName,
-
-                      style:
-                          const TextStyle(
-                        color:
-                            AppColors
-                                .textPrimary,
-
-                        fontSize:
-                            13.5,
-
-                        fontWeight:
-                            FontWeight
-                                .w800,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-
-                    if (item
-                        .companyName
-                        .isNotEmpty)
+                    if (item.companyName.isNotEmpty)
                       Padding(
-                        padding:
-                            const EdgeInsets.only(
-                          top:
-                              3,
-                        ),
-
-                        child:
-                            Text(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Text(
                           item.companyName,
-
-                          style:
-                              const TextStyle(
-                            color:
-                                AppColors
-                                    .textSecondary,
-
-                            fontSize:
-                                10,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 10,
                           ),
                         ),
                       ),
                   ],
                 ),
               ),
-
               Container(
-                padding:
-                    const EdgeInsets.symmetric(
-                  horizontal:
-                      9,
-
-                  vertical:
-                      5,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 9,
+                  vertical: 5,
                 ),
-
-                decoration:
-                    BoxDecoration(
-                  color:
-                      AppColors
-                          .successSoft,
-
-                  borderRadius:
-                      BorderRadius.circular(
-                    18,
-                  ),
+                decoration: BoxDecoration(
+                  color: AppColors.successSoft,
+                  borderRadius: BorderRadius.circular(18),
                 ),
-
-                child:
-                    Text(
-                  '${item.discountPercent.toStringAsFixed(0)}%',
-
-                  style:
-                      const TextStyle(
-                    color:
-                        AppColors.success,
-
-                    fontSize:
-                        10,
-
-                    fontWeight:
-                        FontWeight
-                            .w800,
+                child: Text(
+                  freeOnly
+                      ? 'مجاني'
+                      : '${item.discountPercent.toStringAsFixed(0)}%',
+                  style: const TextStyle(
+                    color: AppColors.success,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
             ],
           ),
-
-          const SizedBox(
-            height:
-                13,
-          ),
-
+          const SizedBox(height: 13),
           Row(
             children: [
               Expanded(
-                child:
-                    _InfoItem(
-                  title:
-                      'السعر',
-
-                  value:
-                      _money(
-                    item.price,
-                  ),
+                child: _InfoItem(
+                  title: 'السعر',
+                  value: freeOnly ? 'مجاني' : _money(item.price),
                 ),
               ),
-
               Expanded(
-                child:
-                    _InfoItem(
-                  title:
-                      'الكمية',
-
-                  value:
-                      '${item.quantity}',
+                child: _InfoItem(
+                  title: freeOnly ? 'الكمية المجانية' : 'الكمية',
+                  value: '$shownQuantity',
                 ),
               ),
-
               Expanded(
-                child:
-                    _InfoItem(
-                  title:
-                      'بعد الحسم',
-
-                  value:
-                      _money(
-                    total,
-                  ),
+                child: _InfoItem(
+                  title: freeOnly ? 'الإجمالي' : 'بعد الحسم',
+                  value: freeOnly ? _money(0) : _money(total),
                 ),
               ),
             ],
           ),
+          if (!freeOnly && item.freeQuantity > 0) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 8,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.successSoft,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'يتضمن ${item.freeQuantity} قطعة مجانية ضمن السلة',
+                style: const TextStyle(
+                  color: AppColors.success,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -854,10 +804,8 @@ class _InfoItem
 // Summary
 // =========================================================
 
-class _SummaryCard
-    extends StatelessWidget {
-  final PromotionalBasketDetailsModel
-      basket;
+class _SummaryCard extends StatelessWidget {
+  final PromotionalBasketDetailsModel basket;
 
   const _SummaryCard({
     required this.basket,
@@ -866,86 +814,50 @@ class _SummaryCard
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-          const EdgeInsets.all(
-        16,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: AppColors.border),
       ),
-
-      decoration:
-          BoxDecoration(
-        color:
-            Colors.white,
-
-        borderRadius:
-            BorderRadius.circular(
-          17,
-        ),
-
-        border:
-            Border.all(
-          color:
-              AppColors.border,
-        ),
-      ),
-
-      child:
-          Column(
+      child: Column(
         children: [
           _SummaryRow(
-            title:
-                'الكمية الإجمالية',
-
-            value:
-                '${basket.totalQuantity}',
+            title: 'الكمية المدفوعة',
+            value: '${basket.totalPaidQuantity}',
           ),
-
-          const SizedBox(
-            height:
-                9,
-          ),
-
-          _SummaryRow(
-            title:
-                'الإجمالي قبل الحسم',
-
-            value:
-                _money(
-              basket.subtotal,
+          if (basket.totalFreeQuantity > 0) ...[
+            const SizedBox(height: 9),
+            _SummaryRow(
+              title: 'الكمية المجانية',
+              value: '${basket.totalFreeQuantity}',
+              valueColor: AppColors.success,
             ),
-          ),
-
-          const SizedBox(
-            height:
-                9,
-          ),
-
+          ],
+          const SizedBox(height: 9),
           _SummaryRow(
-            title:
-                'قيمة الحسم',
-
-            value:
-                '- ${_money(basket.totalDiscount)}',
-
-            valueColor:
-                AppColors.success,
+            title: 'الإجمالي قبل الحسم',
+            value: _money(basket.subtotal),
           ),
-
-          const Divider(
-            height:
-                22,
-          ),
-
+          const SizedBox(height: 9),
           _SummaryRow(
-            title:
-                'الإجمالي بعد الحسم',
-
-            value:
-                _money(
-              basket.finalTotal,
+            title: 'قيمة الحسم',
+            value: '- ${_money(basket.totalDiscount)}',
+            valueColor: AppColors.success,
+          ),
+          if (basket.invoiceDiscountPercent > 0) ...[
+            const SizedBox(height: 9),
+            _SummaryRow(
+              title: 'حسم الفاتورة',
+              value: '${basket.invoiceDiscountPercent.toStringAsFixed(0)}%',
+              valueColor: AppColors.success,
             ),
-
-            bold:
-                true,
+          ],
+          const Divider(height: 22),
+          _SummaryRow(
+            title: 'إجمالي أصناف السلة بعد الحسم',
+            value: _money(basket.finalTotal),
+            bold: true,
           ),
         ],
       ),
@@ -1146,16 +1058,21 @@ void _addBasketItemToSharedCart(
 
   final Map<String, dynamic>? existing = sharedCart[cartKey];
 
-  if (existing != null) {
-    final int oldQuantity = cartValueToInt(existing['paidQuantity']);
-    final int addedQuantity = cartValueToInt(item['quantity']);
+  int paidQuantity = cartValueToInt(item['quantity']);
+  int freeQuantity = cartValueToInt(item['freeQuantity']);
 
-    item['quantity'] = oldQuantity + addedQuantity;
-    item = normalizeCurrentOrderCartItem(item);
+  if (existing != null) {
+    paidQuantity += cartValueToInt(existing['paidQuantity']);
+    freeQuantity += cartValueToInt(existing['freeQuantity']);
   }
 
-  final int paidQuantity = cartValueToInt(item['quantity']);
-  final int freeQuantity = cartValueToInt(item['freeQuantity']);
+  item['quantity'] = paidQuantity;
+  item['freeQuantity'] = freeQuantity;
+  item['isFree'] = paidQuantity <= 0 && freeQuantity > 0;
+  item = normalizeCurrentOrderCartItem(item);
+
+  paidQuantity = cartValueToInt(item['quantity']);
+  freeQuantity = cartValueToInt(item['freeQuantity']);
 
   sharedCart[cartKey] = {
     'product': Map<String, dynamic>.from(item)
@@ -1177,53 +1094,24 @@ void _addBasketToOrder(
   bool selectForOrder,
   Map<String, Map<String, dynamic>>? cartItems,
 ) {
-  final List<Map<String, dynamic>>
-      orderItems =
-      basket.items.map(
-    (item) {
-      return {
-        "id":
-            item.productId,
+  final List<Map<String, dynamic>> orderItems =
+      basket.items
+          .map(
+            (item) => item.toCartItem(
+              promotionalBasketId: basket.id,
+              promotionalBasketName: basket.title,
+            ),
+          )
+          .toList();
 
-        "product_id":
-            item.productId,
-
-        "name":
-            item.productName,
-
-        "scientificName":
-            item.scientificName,
-
-        "companyId":
-            item.companyId,
-
-        "company":
-            item.companyName,
-
-        "price":
-            item.price,
-
-        "quantity":
-            item.quantity,
-
-        "discountPercent":
-            item.discountPercent,
-
-        "image":
-            item.image,
-
-        "promotionBasketId":
-            basket.id,
-
-        "offerSource":
-            "سلة ترويجية: ${basket.title}",
-      };
-    },
-  ).toList();
-
-  // ===============================================
-  // جايين من الطلبية
-  // ===============================================
+  // إذا كانت السلة لا تسمح صراحة بدمج العرض الأساسي، لا نمرر basicOffer
+  // من أي بيانات جانبية إلى عناصر السلة.
+  if (!basket.combineWithBasicOffer) {
+    for (final item in orderItems) {
+      item.remove('basicOffer');
+      item.remove('basic_offer');
+    }
+  }
 
   if (selectForOrder) {
     if (cartItems != null) {
@@ -1248,17 +1136,11 @@ void _addBasketToOrder(
     return;
   }
 
-  // ===============================================
-  // قسم العروض بشكل مستقل
-  // ===============================================
-
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) =>
-          OrderCartScreen(
-        items:
-            orderItems,
+      builder: (_) => OrderCartScreen(
+        items: orderItems,
       ),
     ),
   );

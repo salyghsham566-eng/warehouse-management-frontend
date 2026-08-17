@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_2/Core/di/injection_container.dart';
+import 'package:project_2/Core/theme/app_colors.dart';
 import 'package:project_2/Features/auth/bloc/orders_tracking_bloc.dart';
 import 'package:project_2/Features/auth/bloc/orders_tracking_event.dart';
 import 'package:project_2/Features/auth/bloc/orders_tracking_state.dart';
@@ -108,7 +109,7 @@ void dispose() {
                         vertical: 28,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xff082B63),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(

@@ -11,24 +11,35 @@ class WorkPlanDetailsBloc
   WorkPlanDetailsBloc({
     required this.repository,
   }) : super(WorkPlanDetailsInitial()) {
-    on<LoadWorkPlanDetailsEvent>(_loadDetails);
+    on<LoadWorkPlanDetailsEvent>(
+      _loadDetails,
+    );
+
+    on<AddPersonalNoteToDetailsEvent>(
+      _addPersonalNoteLocally,
+    );
+
+    on<AddOfficialNoteToDetailsEvent>(
+      _addOfficialNoteLocally,
+    );
   }
 
   Future<void> _loadDetails(
     LoadWorkPlanDetailsEvent event,
     Emitter<WorkPlanDetailsState> emit,
   ) async {
-    // إذا كانت التفاصيل محمّلة مسبقاً، فهذا Refresh بعد إضافة
-    // ملاحظة/رد أو تحديث آخر. نحافظ على البيانات الحالية أثناء
-    // جلب النسخة الجديدة حتى لا تتحول الشاشة إلى Loading بالكامل.
-    final hasLoadedData = state is WorkPlanDetailsLoaded;
+    final bool hasLoadedData =
+        state is WorkPlanDetailsLoaded;
 
     if (!hasLoadedData) {
-      emit(WorkPlanDetailsLoading());
+      emit(
+        WorkPlanDetailsLoading(),
+      );
     }
 
     try {
-      final plan = await repository.getWorkPlanDetails(
+      final plan =
+          await repository.getWorkPlanDetails(
         planId: event.planId,
       );
 
@@ -38,9 +49,6 @@ class WorkPlanDetailsBloc
         ),
       );
     } catch (e) {
-      // عند أول فتح للشاشة نعرض الخطأ بشكل طبيعي.
-      // أما أثناء Refresh ولدينا بيانات ظاهرة بالفعل، فلا نمسح
-      // الشاشة ولا نحولها إلى Error بسبب فشل تحديث مؤقت.
       if (!hasLoadedData) {
         emit(
           WorkPlanDetailsFailure(
@@ -49,5 +57,57 @@ class WorkPlanDetailsBloc
         );
       }
     }
+  }
+
+  void _addPersonalNoteLocally(
+    AddPersonalNoteToDetailsEvent event,
+    Emitter<WorkPlanDetailsState> emit,
+  ) {
+    final currentState = state;
+
+    if (currentState
+        is! WorkPlanDetailsLoaded) {
+      return;
+    }
+
+    final updatedPlan =
+        currentState.plan.copyWith(
+      personalNotes: [
+        event.note,
+        ...currentState.plan.personalNotes,
+      ],
+    );
+
+    emit(
+      WorkPlanDetailsLoaded(
+        plan: updatedPlan,
+      ),
+    );
+  }
+
+  void _addOfficialNoteLocally(
+    AddOfficialNoteToDetailsEvent event,
+    Emitter<WorkPlanDetailsState> emit,
+  ) {
+    final currentState = state;
+
+    if (currentState
+        is! WorkPlanDetailsLoaded) {
+      return;
+    }
+
+    final updatedPlan =
+        currentState.plan.copyWith(
+      officialNotes: [
+        event.note,
+        ...currentState.plan.officialNotes,
+      ],
+    );
+
+    emit(
+      WorkPlanDetailsLoaded(
+        plan: updatedPlan,
+      ),
+    );
   }
 }

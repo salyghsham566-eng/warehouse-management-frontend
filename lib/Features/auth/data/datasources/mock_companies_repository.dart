@@ -11,6 +11,7 @@ class MockCompaniesDataSource implements CompaniesDataSource {
 
     return const [
       CompanyModel(
+        id: 1,
         name: 'GSK العالمية',
         productsCount: 450,
         offers: 5,
@@ -45,6 +46,7 @@ class MockCompaniesDataSource implements CompaniesDataSource {
         ],
       ),
       CompanyModel(
+        id: 2,
         name: 'حما فارما',
         productsCount: 1200,
         offers: 0,

@@ -49,6 +49,14 @@ class _WorkPlanNotesScreenState
             listener: (context, state) {
               if (state
                   is WorkPlanPersonalNoteSuccess) {
+                context
+                    .read<WorkPlanDetailsBloc>()
+                    .add(
+                      AddPersonalNoteToDetailsEvent(
+                        note: state.note,
+                      ),
+                    );
+
                 ScaffoldMessenger.of(context)
                     .showSnackBar(
                   const SnackBar(
@@ -57,8 +65,6 @@ class _WorkPlanNotesScreenState
                     ),
                   ),
                 );
-
-                _reloadPlan(context);
               }
 
               if (state
@@ -84,6 +90,14 @@ class _WorkPlanNotesScreenState
             listener: (context, state) {
               if (state
                   is WorkPlanOfficialNoteSuccess) {
+                context
+                    .read<WorkPlanDetailsBloc>()
+                    .add(
+                      AddOfficialNoteToDetailsEvent(
+                        note: state.note,
+                      ),
+                    );
+
                 ScaffoldMessenger.of(context)
                     .showSnackBar(
                   const SnackBar(
@@ -92,8 +106,6 @@ class _WorkPlanNotesScreenState
                     ),
                   ),
                 );
-
-                _reloadPlan(context);
               }
 
               if (state
@@ -1213,8 +1225,6 @@ void _showAddPersonalNoteDialog(
         ),
       );
     },
-  ).whenComplete(
-    controller.dispose,
   );
 }
 
@@ -1420,8 +1430,6 @@ void _showAddOfficialNoteDialog(
         },
       );
     },
-  ).whenComplete(
-    controller.dispose,
   );
 }
 

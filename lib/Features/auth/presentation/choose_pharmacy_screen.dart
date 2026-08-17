@@ -4,7 +4,7 @@ import 'package:project_2/Core/di/injection_container.dart';
 import 'package:project_2/Features/auth/bloc/pharmacies_bloc.dart';
 import 'package:project_2/Features/auth/bloc/pharmacies_event.dart';
 import 'package:project_2/Features/auth/bloc/pharmacies_state.dart';
-
+import 'package:project_2/Core/widgets/app_image.dart';
 class ChoosePharmacyPage extends StatelessWidget {
   final double currentOrderTotal;
 
@@ -361,17 +361,16 @@ class _ChoosePharmacyScreenState extends State<ChoosePharmacyScreen> {
         color: const Color(0xffF2F5F8),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Image.asset(
-        pharmacy["image"].toString(),
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          return const Icon(
-            Icons.local_pharmacy_outlined,
-            size: 28,
-            color: Color(0xff6B8A92),
-          );
-        },
-      ),
+      child: AppImage(
+  image:
+      pharmacy["image"]?.toString(),
+  fit: BoxFit.contain,
+  fallbackIcon:
+      Icons.local_pharmacy_outlined,
+  fallbackColor:
+      const Color(0xff6B8A92),
+  fallbackSize: 28,
+),
     );
   }
 

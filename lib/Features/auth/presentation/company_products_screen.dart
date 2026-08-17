@@ -8,7 +8,7 @@ import 'package:project_2/Features/auth/bloc/current_order_cart_event.dart';
 import 'package:project_2/Features/auth/bloc/current_order_cart_utils.dart';
 
 import 'package:project_2/Features/auth/presentation/drug_details_screen.dart';
-
+import 'package:project_2/Core/widgets/app_image.dart';
 enum ProductFilter {
   all,
   offers,
@@ -2257,44 +2257,15 @@ List<Map<String, dynamic>> _prepareOrderItems() {
         ),
       ),
 
-      child:
-          image.isEmpty
-              ? const Icon(
-                  Icons.medication_outlined,
-
-                  color:
-                      Color(
-                    0xff4F8B8A,
-                  ),
-
-                  size:
-                      36,
-                )
-              : Image.asset(
-                  image,
-
-                  fit:
-                      BoxFit.contain,
-
-                  errorBuilder:
-                      (
-                    context,
-                    error,
-                    stackTrace,
-                  ) {
-                    return const Icon(
-                      Icons.medication_outlined,
-
-                      color:
-                          Color(
-                        0xff4F8B8A,
-                      ),
-
-                      size:
-                          36,
-                    );
-                  },
-                ),
+      child: AppImage(
+  image: image,
+  fit: BoxFit.contain,
+  fallbackIcon:
+      Icons.medication_outlined,
+  fallbackColor:
+      const Color(0xff4F8B8A),
+  fallbackSize: 36,
+),
     );
   }
 

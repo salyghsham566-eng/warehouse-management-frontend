@@ -78,7 +78,7 @@ class MockOffersDataSource
               'حسم إجمالي 15%',
 
           productsCount:
-              5,
+              6,
 
           sentBy:
               'المشرف المباشر',
@@ -98,7 +98,7 @@ class MockOffersDataSource
               'حسم إجمالي 20%',
 
           productsCount:
-              7,
+              8,
 
           sentBy:
               'المشرف المباشر',
@@ -141,6 +141,9 @@ class MockOffersDataSource
 
         sentBy:
             'المشرف المباشر',
+
+        supervisorNotes:
+            'تُضاف الأصناف المجانية تلقائياً مع السلة ولا تُدمج مع عرض الصنف الأساسي.',
 
         validFrom:
             '2026-08-01',
@@ -293,6 +296,21 @@ class MockOffersDataSource
             image:
                 '',
           ),
+
+          // صنف مجاني مستقل ضمن السلة - UC-29
+          PromotionalBasketItemModel(
+            productId: 106,
+            productName: 'مناديل أطفال',
+            scientificName: 'Baby Wipes',
+            companyId: 3,
+            companyName: 'شركة الأمل',
+            price: 0,
+            quantity: 0,
+            freeQuantity: 2,
+            discountPercent: 0,
+            isFree: true,
+            image: '',
+          ),
         ],
       );
     }
@@ -316,6 +334,9 @@ class MockOffersDataSource
 
         sentBy:
             'المشرف المباشر',
+
+        supervisorNotes:
+            'السلة مخصصة للحملة الحالية، والأصناف المجانية جزء ثابت منها.',
 
         validFrom:
             '2026-08-05',
@@ -405,6 +426,21 @@ class MockOffersDataSource
             price: 7500,
             quantity: 2,
             discountPercent: 20,
+            image: '',
+          ),
+
+          // صنف مجاني مستقل ضمن السلة - UC-29
+          PromotionalBasketItemModel(
+            productId: 208,
+            productName: 'كمامة طبية',
+            scientificName: 'Medical Mask',
+            companyId: 5,
+            companyName: 'شركة الصحة',
+            price: 0,
+            quantity: 0,
+            freeQuantity: 3,
+            discountPercent: 0,
+            isFree: true,
             image: '',
           ),
         ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project_2/Core/di/injection_container.dart';
+import 'package:project_2/Core/widgets/app_image.dart';
 import 'package:project_2/Features/auth/bloc/offers_bloc.dart';
 import 'package:project_2/Features/auth/bloc/offers_event.dart';
 import 'package:project_2/Features/auth/bloc/current_order_cart_utils.dart';
@@ -296,28 +297,40 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
   }
 
   void _increaseQuantity(int index) {
-    setState(() {
-      final int currentQuantity = _toInt(orderItems[index]["quantity"]);
-
-      orderItems[index]["quantity"] = currentQuantity + 1;
-
-      _syncCartItem(index);
-    });
+  if (isCurrentOrderFreeOnlyItem(orderItems[index])) {
+    return;
   }
 
-  void _decreaseQuantity(int index) {
-    final int currentQuantity = _toInt(orderItems[index]["quantity"]);
+  setState(() {
+    final int currentQuantity = _toInt(
+      orderItems[index]["quantity"],
+    );
 
-    if (currentQuantity <= 1) {
-      return;
-    }
+    orderItems[index]["quantity"] =
+        currentQuantity + 1;
 
-    setState(() {
-      orderItems[index]["quantity"] = currentQuantity - 1;
-
-      _syncCartItem(index);
-    });
+    _syncCartItem(index);
+  });
+}
+ void _decreaseQuantity(int index) {
+  if (isCurrentOrderFreeOnlyItem(orderItems[index])) {
+    return;
   }
+
+  final int currentQuantity =
+      _toInt(orderItems[index]["quantity"]);
+
+  if (currentQuantity <= 1) {
+    return;
+  }
+
+  setState(() {
+    orderItems[index]["quantity"] =
+        currentQuantity - 1;
+
+    _syncCartItem(index);
+  });
+}
 
   void _deleteItem(int index) {
     setState(() {
@@ -711,6 +724,8 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
   }
 
   Widget _buildOrderItem(Map<String, dynamic> item, int index) {
+    final bool freeOnly =
+    isCurrentOrderFreeOnlyItem(item);
     final int quantity = _toInt(item["quantity"]);
 
     final int freeQuantity = _getFreeQuantity(item);
@@ -751,17 +766,15 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                   color: const Color(0xffF1F6F7),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Image.asset(
-                  item["image"]?.toString() ?? "",
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
-                      Icons.medication_outlined,
-                      color: Color(0xff4F8B8A),
-                      size: 38,
-                    );
-                  },
-                ),
+                child: AppImage(
+  image: item["image"]?.toString(),
+  fit: BoxFit.contain,
+  fallbackIcon:
+      Icons.medication_outlined,
+  fallbackColor:
+      const Color(0xff4F8B8A),
+  fallbackSize: 38,
+),
               ),
 
               const SizedBox(width: 10),
@@ -889,9 +902,11 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      onPressed: () {
-                        _decreaseQuantity(index);
-                      },
+                     onPressed: freeOnly
+    ? null
+    : () {
+        _decreaseQuantity(index);
+      },
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(
                         minWidth: 34,
@@ -917,9 +932,11 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
                     ),
 
                     IconButton(
-                      onPressed: () {
-                        _increaseQuantity(index);
-                      },
+                     onPressed: freeOnly
+    ? null
+    : () {
+        _increaseQuantity(index);
+      },
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(
                         minWidth: 34,
@@ -969,7 +986,29 @@ class _OrderCartScreenState extends State<OrderCartScreen> {
               ),
             ),
           ],
+if (freeOnly && freeQuantity > 0) ...[
+  const SizedBox(height: 11),
 
+  Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(
+      horizontal: 10,
+      vertical: 8,
+    ),
+    decoration: BoxDecoration(
+      color: const Color(0xffE8F8EF),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Text(
+      "صنف مجاني ضمن السلة — الكمية المجانية: $freeQuantity",
+      style: const TextStyle(
+        color: Color(0xff169967),
+        fontSize: 11,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  ),
+],
           if (offer is Map && freeQuantity > 0) ...[
             const SizedBox(height: 11),
 

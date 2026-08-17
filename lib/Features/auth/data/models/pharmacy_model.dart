@@ -29,7 +29,12 @@ class PharmacyModel {
         json['due_amount'] ?? json['dueAmount'],
       ),
       image:
-          (json['image'] ?? json['image_url'])?.toString() ?? '',
+    (
+      json['image'] ??
+      json['image_url'] ??
+      json['imageUrl']
+    )?.toString() ??
+    '',
     );
   }
 

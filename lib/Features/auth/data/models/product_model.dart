@@ -80,7 +80,13 @@ class ProductModel {
       oldPrice: _parseNullableDouble(
         json['old_price'] ?? json['oldPrice'],
       ),
-      image: json['image']?.toString() ?? '',
+     image:
+    (
+      json['image'] ??
+      json['image_url'] ??
+      json['imageUrl']
+    )?.toString() ??
+    '',
       basicOffer: basicOfferData is Map<String, dynamic>
           ? BasicOfferModel.fromJson(basicOfferData)
           : null,

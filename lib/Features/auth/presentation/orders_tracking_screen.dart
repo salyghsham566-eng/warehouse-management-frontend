@@ -4,8 +4,7 @@ import 'package:project_2/Core/di/injection_container.dart';
 import 'package:project_2/Features/auth/bloc/orders_tracking_bloc.dart';
 import 'package:project_2/Features/auth/bloc/orders_tracking_event.dart';
 import 'package:project_2/Features/auth/presentation/order_details_screen.dart';
-import 'package:project_2/orders_store.dart';
-
+import 'package:project_2/Features/auth/bloc/orders_tracking_state.dart';
 class OrdersTrackingScreen extends StatefulWidget {
   const OrdersTrackingScreen({super.key});
 
@@ -38,6 +37,7 @@ void dispose() {
     "rejected": "مرفوضة",
     "modified": "تم التعديل",
     "archived": "مؤرشفة",
+    "cancelled_by_rep": "ملغاة",
   };
 
   double _toDouble(dynamic value) {
@@ -214,16 +214,30 @@ void dispose() {
     return statusLabels[status] ?? status;
   }
 
-  void _openOrderDetails(Map<String, dynamic> order) {
-    final String number = _orderNumber(order);
+ Future<void> _openOrderDetails(
+  Map<String, dynamic> order,
+) async {
+  final String number =
+      _orderNumber(order);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => OrderDetailsScreen(orderNumber: number),
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) =>
+          OrderDetailsScreen(
+        orderNumber: number,
       ),
-    );
+    ),
+  );
+
+  if (!mounted) {
+    return;
   }
+
+  _ordersBloc.add(
+    const OrdersTrackingRefreshed(),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -248,31 +262,120 @@ void dispose() {
             surfaceTintColor: Colors.white,
             elevation: 0,
           ),
-          body: ValueListenableBuilder<List<Map<String, dynamic>>>(
-            valueListenable: OrdersStore.instance.ordersNotifier,
-            builder: (context, orders, child) {
-              final visibleOrders = _filteredOrders(orders);
-      
-              return Column(
-                children: [
-                  _buildFilters(),
-                  _buildDateFilter(),
-                  _buildResultHeader(visibleOrders.length),
-                  Expanded(
-                    child: visibleOrders.isEmpty
-                        ? _buildEmptyState()
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),
-                            itemCount: visibleOrders.length,
-                            itemBuilder: (context, index) {
-                              return _buildOrderCard(visibleOrders[index]);
-                            },
-                          ),
-                  ),
-                ],
-              );
-            },
+          body: BlocBuilder<OrdersTrackingBloc, OrdersTrackingState>(
+  builder: (context, state) {
+    if (state is OrdersTrackingInitial ||
+        state is OrdersTrackingLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (state is OrdersTrackingFailure) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 60,
+                color: Color(0xffD83A3A),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                state.message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xff53657E),
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  context
+                      .read<OrdersTrackingBloc>()
+                      .add(
+                        const OrdersTrackingRefreshed(),
+                      );
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text("إعادة المحاولة"),
+              ),
+            ],
           ),
+        ),
+      );
+    }
+
+    if (state is OrdersTrackingLoaded) {
+      final List<Map<String, dynamic>> orders =
+          state.orders
+              .map(
+                (order) => order.toMap(),
+              )
+              .toList();
+
+      final List<Map<String, dynamic>> visibleOrders =
+          _filteredOrders(orders);
+
+      return Column(
+        children: [
+          _buildFilters(),
+          _buildDateFilter(),
+          _buildResultHeader(
+            visibleOrders.length,
+          ),
+          Expanded(
+            child: visibleOrders.isEmpty
+                ? _buildEmptyState()
+                : RefreshIndicator(
+                    onRefresh: () async {
+                      context
+                          .read<OrdersTrackingBloc>()
+                          .add(
+                            const OrdersTrackingRefreshed(),
+                          );
+
+                      await context
+                          .read<OrdersTrackingBloc>()
+                          .stream
+                          .firstWhere(
+                            (state) =>
+                                state is OrdersTrackingLoaded ||
+                                state is OrdersTrackingFailure,
+                          );
+                    },
+                    child: ListView.builder(
+                      physics:
+                          const AlwaysScrollableScrollPhysics(),
+                      padding:
+                          const EdgeInsets.fromLTRB(
+                            12,
+                            4,
+                            12,
+                            20,
+                          ),
+                      itemCount:
+                          visibleOrders.length,
+                      itemBuilder:
+                          (context, index) {
+                        return _buildOrderCard(
+                          visibleOrders[index],
+                        );
+                      },
+                    ),
+                  ),
+          ),
+        ],
+      );
+    }
+
+    return const SizedBox.shrink();
+  },
+),
         ),
       ),
     );

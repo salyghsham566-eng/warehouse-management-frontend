@@ -6,7 +6,7 @@ import 'package:project_2/Features/auth/bloc/companies_event.dart';
 import 'package:project_2/Features/auth/bloc/companies_state.dart';
 import 'package:project_2/Features/auth/data/models/company_model.dart';
 import 'package:project_2/Features/auth/presentation/company_products_screen.dart';
-
+import 'package:project_2/Core/widgets/app_image.dart';
 class ChooseCompanyPage extends StatelessWidget {
   final Map<String, Map<String, dynamic>>? cartItems;
   final bool returnToExistingOrder;
@@ -297,17 +297,14 @@ void initState() {
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: const Color(0xffEDF0F5)),
                         ),
-                        child: Image.asset(
-                          company.image,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(
-                              Icons.business,
-                              color: Color(0xff0A2954),
-                              size: 30,
-                            );
-                          },
-                        ),
+                       child: AppImage(
+  image: company.image,
+  fit: BoxFit.contain,
+  fallbackIcon: Icons.business,
+  fallbackColor:
+      const Color(0xff0A2954),
+  fallbackSize: 30,
+),
                       ),
 
                       const SizedBox(width: 10),
